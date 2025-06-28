@@ -45,13 +45,26 @@ fastify.get('/health', async (request, reply) => {
 
 fastify.get('/api/spatial/test', async (request, reply) => {
   const result = await pgPool.query(`
-    SELECT ST_AsGeoJSON(ST_MakePoint(-73.98, 40.75)) as point,
-           ST_Distance(
-             ST_MakePoint(-73.98, 40.75)::geography,
-             ST_MakePoint(-74.00, 40.71)::geography
-           ) as distance_meters
+    SELECT 
+      id,
+      name,
+      ST_AsGeoJSON(location) as geojson,
+      ST_X(location) as lng,
+      ST_Y(location) as lat
+    FROM spatial_test
+    ORDER BY id
   `);
-  return result.rows[0];
+  return {
+    type: 'FeatureCollection',
+    features: result.rows.map(row => ({
+      type: 'Feature',
+      properties: {
+        id: row.id,
+        name: row.name
+      },
+      geometry: JSON.parse(row.geojson)
+    }))
+  };
 });
 
 const start = async () => {
@@ -65,3 +78,16 @@ const start = async () => {
 };
 
 start();
+
+fastify.get('/', async (request, reply) => {
+  return {
+    name: 'GIS Platform API',
+    version: '0.0.1',
+    status: 'operational',
+    endpoints: {
+      health: '/health',
+      spatial_test: '/api/spatial/test'
+    },
+    documentation: 'https://github.com/YOUR_USERNAME/gis-platform'
+  };
+});

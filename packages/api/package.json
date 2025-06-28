@@ -9,16 +9,16 @@
     "test": "vitest"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
-    "pg": "^8.13.1",
+    "fastify": "^4.29.1",
+    "pg": "^8.16.3",
     "pg-pool": "^3.7.0",
-    "pino-pretty": "^11.2.2"
+    "pino-pretty": "^11.3.0"
   },
   "devDependencies": {
-    "@types/node": "^22.11.0",
-    "@types/pg": "^8.11.10",
-    "tsx": "^4.19.2",
-    "typescript": "^5.5.4",
-    "vitest": "^2.1.8"
+    "@types/node": "^22.15.34",
+    "@types/pg": "^8.15.4",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.9"
   }
 }
