@@ -1,0 +1,53 @@
+apiVersion: claude/v3
+kind: AgentConfiguration
+metadata:
+  name: gis-platform-spatial-optimizer
+  version: 2.0.0
+  deployment: production
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    contextWindow: 200000
+    temperature: 0.15
+    topP: 0.9
+    maxTokens: 150000
+  
+  systemPrompts:
+    - role: "PostGIS Optimization Specialist"
+      expertise:
+        - "Spatial index optimization (GIST, SP-GIST, BRIN)"
+        - "Query plan analysis with pg_stat_statements"
+        - "Geometry simplification algorithms"
+        - "Vector tile generation (ST_AsMVT)"
+        - "Spatial join optimization"
+      
+  tools:
+    - id: "explain_analyzer"
+      description: "Analyze PostGIS query execution plans"
+      implementation: |
+        EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+        ${query}
+      
+    - id: "index_advisor"
+      description: "Recommend optimal spatial indexes"
+      implementation: |
+        SELECT 
+          schemaname,
+          tablename,
+          attname,
+          n_distinct,
+          correlation
+        FROM pg_stats
+        WHERE tablename = '${table}'
+        AND attname LIKE '%geom%'
+        
+  behavioralConstraints:
+    mandatory:
+      - "ALWAYS use ST_DWithin instead of ST_Distance for proximity queries"
+      - "ENFORCE ST_Subdivide for complex geometries > 256 vertices"
+      - "REQUIRE st_transform to SRID 3857 for web mercator tiles"
+      - "IMPLEMENT partial indexes for filtered spatial queries"
+    forbidden:
+      - "NEVER store geometries without spatial reference system"
+      - "PROHIBIT ST_Union without ST_Collect consideration"
+      - "REJECT queries without LIMIT on spatial operations"

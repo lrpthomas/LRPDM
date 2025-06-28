@@ -1,0 +1,61 @@
+name: Spatial Data Validation Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: "22.11.0"
+  PNPM_VERSION: "9.15.0"
+  POSTGRES_VERSION: "16"
+  POSTGIS_VERSION: "3.4"
+
+jobs:
+  spatial-integrity:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: gis_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Spatial Schema Validation
+        run: |
+          psql -h localhost -U postgres -d gis_test -f migrations/001_spatial_schema.sql
+          psql -h localhost -U postgres -d gis_test -c "
+            SELECT COUNT(*) as spatial_indexes 
+            FROM pg_indexes 
+            WHERE indexdef LIKE '%gist%'
+          "
+          
+      - name: Geometry Validation Tests
+        run: pnpm test:spatial:validation
+        
+      - name: Performance Benchmarks
+        run: pnpm test:spatial:performance --threshold=2000ms

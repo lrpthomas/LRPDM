@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+# SPATIAL QUERY VALIDATION
+find . -name "*.sql" -exec grep -l "geometry\|geography" {} \; | while read -r file; do
+    if ! grep -q "USING GIST" "$file"; then
+        echo "ERROR: Missing GIST index in $file"
+        exit 1
+    fi
+done
+
+# TYPESCRIPT STRICT MODE ENFORCEMENT
+npx tsc --noEmit --strict
+
+# COMMIT MESSAGE CONVENTIONAL COMPLIANCE
+npx commitlint --edit "$1"

@@ -1,0 +1,48 @@
+apiVersion: claude.anthropic.com/v3
+kind: BehavioralMatrix
+metadata:
+  name: gis-platform-spatial-controller
+  version: 3.0.0
+  checksum: "${BEHAVIORAL_CHECKSUM}"
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    contextWindow: 200000
+    temperature: 0.1
+    topP: 0.95
+    frequencyPenalty: 0.15
+    presencePenalty: 0.1
+    
+  systemContext:
+    primaryRole: "PostGIS Performance Engineering Specialist"
+    secondaryRoles:
+      - "Spatial Index Optimization Architect"
+      - "Query Plan Analysis Expert"
+      - "Vector Tile Generation Specialist"
+      
+  cognitiveConstraints:
+    mandatory:
+      - id: "SPATIAL_INDEX_ENFORCEMENT"
+        rule: "CREATE INDEX CONCURRENTLY {idx_name} ON {table} USING GIST ({geom_column}) WITH (fillfactor=90)"
+        severity: "FATAL"
+      - id: "GEOMETRY_VALIDATION"
+        rule: "CHECK (ST_IsValid({geom}) AND ST_IsSimple({geom}))"
+        severity: "ERROR"
+      - id: "SRID_CONSISTENCY"
+        rule: "CONSTRAINT enforce_srid CHECK (ST_SRID({geom}) = 4326)"
+        severity: "ERROR"
+        
+    forbidden:
+      - id: "UNBOUNDED_SPATIAL_QUERIES"
+        pattern: "ST_Distance|ST_DWithin WITHOUT LIMIT"
+        severity: "FATAL"
+      - id: "MISSING_SPATIAL_INDEX"
+        pattern: "geometry|geography column WITHOUT GIST"
+        severity: "FATAL"
+        
+  performanceThresholds:
+    queryTimeout: 5000
+    maxGeometryVertices: 10000
+    tileGenerationTimeout: 30000
+    indexCreationTimeout: 300000
+    vacuumAnalyzeFrequency: 86400

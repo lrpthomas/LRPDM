@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1.7-labs
+ARG NODE_VERSION=22.11.0
+ARG ALPINE_VERSION=3.20
+
+# Stage 1: Dependencies
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS deps
+RUN apk add --no-cache libc6-compat python3 make g++
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/api/package.json ./packages/api/
+COPY packages/shared/package.json ./packages/shared/
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prefer-offline
+
+# Stage 2: Builder
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/api/node_modules ./packages/api/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY . .
+RUN pnpm --filter @gis-platform/api build
+
+# Stage 3: Runtime
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS runtime
+RUN apk add --no-cache dumb-init
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--enable-source-maps --max-old-space-size=4096"
+WORKDIR /app
+RUN addgroup -g 1001 nodejs && adduser -S -u 1001 nodejs
+COPY --from=builder --chown=nodejs:nodejs /app/packages/api/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/api/package.json ./
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+USER nodejs
+EXPOSE 3000
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main.js"]

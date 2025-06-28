@@ -1,0 +1,111 @@
+name: Spatial CI/CD Matrix Pipeline
+on:
+  push:
+    branches: [main, develop, 'release/**']
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      spatial_validation_level:
+        description: 'Spatial validation intensity'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - minimal
+          - standard
+          - comprehensive
+          - exhaustive
+
+env:
+  NODE_VERSION: '22.11.0'
+  PNPM_VERSION: '9.15.0'
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  POSTGRES_VERSION: '16'
+  POSTGIS_VERSION: '3.4'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  dependency-validation:
+    runs-on: ubuntu-latest
+    outputs:
+      lockfile_hash: ${{ steps.hash.outputs.lockfile_hash }}
+      cache_key: ${{ steps.cache.outputs.cache_key }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - id: hash
+        run: echo "lockfile_hash=$(sha256sum pnpm-lock.yaml | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+        
+      - id: cache
+        run: echo "cache_key=deps-${{ runner.os }}-${{ env.PNPM_VERSION }}-${{ steps.hash.outputs.lockfile_hash }}" >> $GITHUB_OUTPUT
+        
+  spatial-infrastructure:
+    needs: dependency-validation
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postgis_version: ['15-3.3', '16-3.4', '17-3.5-beta']
+        include:
+          - postgis_version: '16-3.4'
+            is_primary: true
+    services:
+      postgres:
+        image: postgis/postgis:${{ matrix.postgis_version }}
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: gis_test
+          POSTGRES_INITDB_ARGS: '--data-checksums --encoding=UTF8'
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --shm-size=256mb
+        ports:
+          - 5432:5432
+          
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Spatial Extension Verification
+        run: |
+          psql -h localhost -U postgres -d gis_test << SQL
+            CREATE EXTENSION IF NOT EXISTS postgis;
+            CREATE EXTENSION IF NOT EXISTS postgis_topology;
+            CREATE EXTENSION IF NOT EXISTS postgis_raster;
+            CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+            SELECT PostGIS_Full_Version();
+          SQL
+          
+      - name: Spatial Index Performance Benchmarks
+        run: |
+          psql -h localhost -U postgres -d gis_test -f scripts/ci/spatial-benchmarks.sql
+          
+  security-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: typescript, javascript
+          queries: security-and-quality
+          
+      - name: Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload Security Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

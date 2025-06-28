@@ -1,0 +1,13 @@
+# GIS Platform Code Ownership Matrix
+* @crta
+
+# Critical Infrastructure
+/infrastructure/ @crta
+/.github/ @crta
+/agents/ @crta
+
+# Package-Specific Ownership
+/packages/api/ @crta
+/packages/web/ @crta
+/packages/mobile/ @crta
+/packages/shared/ @crta

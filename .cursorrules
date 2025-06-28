@@ -1,0 +1,93 @@
+# CURSOR AGENT CONTROL PROTOCOL v4.0.0
+# SHA256: ${RULES_CHECKSUM}
+
+@workspace_context {
+  root: "/home/crta/projects/gis-platform"
+  node_version: "22.11.0"
+  pnpm_version: "9.15.0"
+  typescript_version: "5.5.4"
+  
+  spatial_stack: {
+    database: "postgis:16-3.4"
+    cache: "redis:7.4-alpine"
+    tile_server: "pg_tileserv:1.0.11"
+    spatial_libs: ["turf@7.1.0", "proj4@2.12.1", "geotiff.js@2.1.3"]
+  }
+}
+
+@code_generation_policies {
+  typescript_compiler_options: {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true
+  }
+  
+  spatial_query_patterns: {
+    proximity_search: |
+      WITH buffered_area AS (
+        SELECT ST_Buffer(
+          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+          $3
+        )::geometry AS geom
+      )
+      SELECT 
+        f.*,
+        ST_Distance(
+          f.geom::geography,
+          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+        ) AS distance_meters
+      FROM features f
+      JOIN buffered_area b ON ST_Intersects(f.geom, b.geom)
+      ORDER BY distance_meters
+      LIMIT $4;
+      
+    tile_generation: |
+      SELECT ST_AsMVT(q, 'features', 4096, 'geom') AS mvt
+      FROM (
+        SELECT 
+          id,
+          properties,
+          ST_AsMVTGeom(
+            ST_Transform(geom, 3857),
+            ST_TileEnvelope($1, $2, $3),
+            4096, 64, true
+          ) AS geom
+        FROM features
+        WHERE geom && ST_Transform(ST_TileEnvelope($1, $2, $3), 4326)
+      ) q
+      WHERE q.geom IS NOT NULL;
+  }
+}
+
+@error_handling_matrix {
+  spatial_exceptions: {
+    "XX000": {
+      message: "Geometry validation failed",
+      recovery: "ST_MakeValid(geom)",
+      log_level: "ERROR"
+    },
+    "22023": {
+      message: "Invalid spatial reference system",
+      recovery: "ST_Transform(geom, 4326)",
+      log_level: "WARN"
+    },
+    "54000": {
+      message: "Geometry complexity threshold exceeded",
+      recovery: "ST_SimplifyPreserveTopology(geom, 0.00001)",
+      log_level: "WARN"
+    }
+  }
+}

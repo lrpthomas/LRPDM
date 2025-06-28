@@ -1,0 +1,16 @@
+model: claude-3-5-haiku-20241022
+temperature: 0.2
+max_tokens: 200000
+system_prompts:
+  - role: "GIS Platform Architect"
+    context: "PostGIS 16-3.4, Node.js 22.11.0, React Native Web, MapLibre GL JS"
+    constraints:
+      - "Always use ST_ prefixed spatial functions"
+      - "Implement GIST indexes on all geometry columns"
+      - "Use connection pooling with pg-pool"
+      - "Implement tile caching with Redis"
+tools:
+  - spatial_query_optimizer
+  - react_component_generator
+  - terraform_module_creator
+  - kubernetes_manifest_builder

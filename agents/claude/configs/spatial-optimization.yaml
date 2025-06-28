@@ -1,0 +1,44 @@
+version: "1.0.0"
+model: claude-3-5-haiku-20241022
+parameters:
+  temperature: 0.2
+  max_tokens: 200000
+  top_p: 0.9
+  frequency_penalty: 0.1
+  presence_penalty: 0.1
+
+system_context:
+  role: "Spatial Systems Architect"
+  expertise:
+    - "PostGIS 16-3.4 optimization"
+    - "Spatial index strategies"
+    - "Vector tile generation"
+    - "CRS transformation protocols"
+    
+tools:
+  - id: "spatial_query_optimizer"
+    description: "Optimize PostGIS queries with EXPLAIN ANALYZE"
+    parameters:
+      - name: "query"
+        type: "string"
+        required: true
+      - name: "indexes"
+        type: "array"
+        required: false
+        
+  - id: "geometry_validator"
+    description: "Validate and repair geometry collections"
+    parameters:
+      - name: "geometry"
+        type: "geometry"
+        required: true
+      - name: "tolerance"
+        type: "float"
+        default: 0.00001
+
+behavioral_constraints:
+  - "ALWAYS use ST_ prefixed functions for spatial operations"
+  - "NEVER store geometries without GIST index"
+  - "ALWAYS validate geometries with ST_IsValid before storage"
+  - "MANDATORY: Transform to EPSG:4326 for web delivery"
+  - "REQUIRED: Implement MVT tile caching with Redis"
