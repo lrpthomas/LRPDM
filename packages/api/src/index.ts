@@ -1,13 +1,5 @@
 import Fastify from 'fastify';
 import { Pool } from 'pg';
-# [WSL2-UBUNTU] - API PACKAGE SETUP
-cd ~/projects/gis-platform/packages/api
-mkdir -p src/{controllers,services,repositories,middleware,utils}
-
-# [WSL2-UBUNTU] - CREATE API ENTRY POINT
-cat > src/index.ts << 'EOF'
-import Fastify from 'fastify';
-import { Pool } from 'pg';
 
 const fastify = Fastify({
   logger: {
