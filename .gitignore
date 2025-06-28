@@ -53,3 +53,6 @@ tiles/
 tmp/
 temp/
 .cache/
+data/
+*.log
+.env.local
