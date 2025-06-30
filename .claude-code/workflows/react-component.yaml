@@ -1,0 +1,30 @@
+name: react-spatial-component
+description: Generate React components with spatial functionality
+agent: frontend-spatial-agent
+steps:
+  - name: component_structure
+    prompt: |
+      Generate a React component with:
+      1. TypeScript interfaces
+      2. MapLibre GL JS integration
+      3. Responsive design
+      4. Error boundaries
+      5. Performance optimizations
+      
+      Component requirements: {requirements}
+
+  - name: styling_and_theme
+    prompt: |
+      Add styling with:
+      1. Styled-components or CSS modules
+      2. Theme integration
+      3. Mobile responsiveness
+      4. Accessibility features
+
+  - name: component_tests
+    prompt: |
+      Generate tests including:
+      1. Unit tests with React Testing Library
+      2. Integration tests
+      3. Visual regression tests
+      4. Performance tests

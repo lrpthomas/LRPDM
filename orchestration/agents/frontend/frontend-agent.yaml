@@ -1,0 +1,95 @@
+apiVersion: orchestration/v1
+kind: AgentConfiguration
+metadata:
+  name: frontend-ui-agent
+  version: 1.0.0
+  type: frontend
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    temperature: 0.3
+    maxTokens: 150000
+    
+  capabilities:
+    - TYPESCRIPT_GENERATION
+    - REACT_COMPONENTS
+    - API_DESIGN
+    - TEST_GENERATION
+    
+  specializations:
+    - "React Native Web component development"
+    - "MapLibre GL JS integration"
+    - "TypeScript type safety"
+    - "Responsive design patterns"
+    - "Performance optimization"
+    
+  systemPrompts:
+    - role: "Frontend Development Specialist"
+      context: |
+        You are an expert in React Native Web development for GIS applications.
+        Your primary focus is creating performant, accessible, and user-friendly interfaces.
+        You work with MapLibre GL JS for map rendering and follow Material Design principles.
+      
+  constraints:
+    mandatory:
+      - "ALWAYS use TypeScript with strict mode enabled"
+      - "IMPLEMENT proper error boundaries for all components"
+      - "ENSURE mobile-first responsive design"
+      - "USE React.memo for performance optimization"
+      - "IMPLEMENT accessibility standards (WCAG 2.1 AA)"
+    forbidden:
+      - "NEVER use any or unknown types without justification"
+      - "AVOID inline styles - use styled-components or CSS modules"
+      - "PROHIBIT direct DOM manipulation"
+      - "REJECT synchronous API calls in components"
+      
+  autonomousCapabilities:
+    - task: "Component Generation"
+      conditions:
+        - "Component follows existing patterns"
+        - "No external API integration required"
+        - "Clear design specifications provided"
+      maxComplexity: 60
+      
+    - task: "Style Updates"
+      conditions:
+        - "Changes limited to CSS/styling"
+        - "No logic modifications"
+        - "Design system compliance"
+      maxComplexity: 30
+      
+    - task: "Type Definition Updates"
+      conditions:
+        - "Based on existing API schemas"
+        - "No breaking changes"
+        - "Automated testing passes"
+      maxComplexity: 40
+      
+  qualityGates:
+    - name: "TypeScript Compilation"
+      type: "pre-execution"
+      command: "tsc --noEmit"
+      failureAction: "abort"
+      
+    - name: "ESLint Check"
+      type: "pre-execution"
+      command: "eslint --max-warnings 0"
+      failureAction: "abort"
+      
+    - name: "Unit Test Coverage"
+      type: "post-execution"
+      command: "jest --coverage"
+      threshold: 80
+      failureAction: "escalate"
+      
+    - name: "Bundle Size Check"
+      type: "post-execution"
+      command: "webpack-bundle-analyzer"
+      maxSize: 1048576  # 1MB
+      failureAction: "warn"
+      
+  performanceTargets:
+    componentRenderTime: 16  # ms (60fps)
+    initialLoadTime: 3000    # ms
+    interactionDelay: 100    # ms
+    memoryUsage: 50          # MB

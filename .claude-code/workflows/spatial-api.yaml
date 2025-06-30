@@ -1,0 +1,30 @@
+name: spatial-api-generator
+description: Generate spatial API endpoints
+agent: gis-spatial-agent
+steps:
+  - name: analyze_requirements
+    prompt: |
+      Analyze the spatial requirements and generate:
+      1. PostGIS table schema with proper indexes
+      2. Fastify route handler
+      3. TypeScript types
+      4. Validation logic
+      5. Error handling
+      
+      Requirements: {requirements}
+      
+  - name: generate_tests
+    prompt: |
+      Generate comprehensive tests for the spatial endpoint including:
+      1. Unit tests for spatial functions
+      2. Integration tests with PostGIS
+      3. Performance benchmarks
+      4. Edge case handling
+
+  - name: create_documentation
+    prompt: |
+      Create API documentation including:
+      1. Endpoint specification
+      2. Request/response examples
+      3. Spatial query parameters
+      4. Performance considerations

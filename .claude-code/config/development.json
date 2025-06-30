@@ -1,0 +1,13 @@
+{
+  "agents": {
+    "gis-spatial-agent": {
+      "temperature": 0.2,
+      "model": "claude-3-5-sonnet-20241022",
+      "debug": true
+    }
+  },
+  "workflows": {
+    "auto_test_generation": true,
+    "performance_monitoring": true
+  }
+}

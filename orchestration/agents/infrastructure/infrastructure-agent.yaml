@@ -1,0 +1,169 @@
+apiVersion: orchestration/v1
+kind: AgentConfiguration
+metadata:
+  name: infrastructure-automation-agent
+  version: 1.0.0
+  type: infrastructure
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    temperature: 0.15
+    maxTokens: 150000
+    
+  capabilities:
+    - KUBERNETES_MANAGEMENT
+    - RESOURCE_MONITORING
+    - AUTO_SCALING
+    - DEPLOYMENT_AUTOMATION
+    
+  specializations:
+    - "Kubernetes cluster management"
+    - "Helm chart development"
+    - "Terraform infrastructure as code"
+    - "AWS/GCP/Azure resource optimization"
+    - "Container orchestration"
+    - "CI/CD pipeline automation"
+    
+  systemPrompts:
+    - role: "Infrastructure Automation Engineer"
+      context: |
+        You are an expert in cloud-native infrastructure and Kubernetes.
+        You implement GitOps practices and infrastructure as code.
+        You prioritize reliability, scalability, and cost optimization.
+        You ensure security best practices and compliance requirements.
+      
+  constraints:
+    mandatory:
+      - "ALWAYS use resource limits and requests in Kubernetes"
+      - "IMPLEMENT horizontal pod autoscaling for stateless services"
+      - "USE persistent volume claims for stateful data"
+      - "ENFORCE network policies for pod communication"
+      - "IMPLEMENT proper health checks and readiness probes"
+      - "USE secrets management for sensitive data"
+    forbidden:
+      - "NEVER hardcode secrets in manifests"
+      - "AVOID running containers as root"
+      - "PROHIBIT latest tag for production images"
+      - "REJECT deployments without resource limits"
+      - "NEVER expose services without authentication"
+      
+  autonomousCapabilities:
+    - task: "Horizontal Scaling"
+      conditions:
+        - "CPU/Memory usage > 80%"
+        - "HPA configured"
+        - "Stateless workload"
+      maxComplexity: 60
+      
+    - task: "Resource Optimization"
+      conditions:
+        - "Usage patterns analyzed"
+        - "Cost savings identified"
+        - "No service disruption"
+      maxComplexity: 70
+      
+    - task: "Certificate Renewal"
+      conditions:
+        - "Expiry < 30 days"
+        - "Cert-manager configured"
+        - "DNS validation available"
+      maxComplexity: 40
+      
+    - task: "Backup Execution"
+      conditions:
+        - "Scheduled backup window"
+        - "Storage available"
+        - "No active transactions"
+      maxComplexity: 50
+      
+    - task: "Security Patching"
+      conditions:
+        - "CVE severity < HIGH"
+        - "Rollback plan exists"
+        - "Staging validation passed"
+      maxComplexity: 65
+      
+  qualityGates:
+    - name: "Kubernetes Manifest Validation"
+      type: "pre-execution"
+      command: "kubeval --strict"
+      failureAction: "abort"
+      
+    - name: "Security Scan"
+      type: "pre-execution"
+      command: "trivy image --severity HIGH,CRITICAL"
+      failureAction: "escalate"
+      
+    - name: "Terraform Plan"
+      type: "pre-execution"
+      command: "terraform plan -detailed-exitcode"
+      requiresApproval: true
+      
+    - name: "Resource Usage Check"
+      type: "post-execution"
+      metrics:
+        - "cpu_usage < 80%"
+        - "memory_usage < 85%"
+        - "disk_usage < 90%"
+      failureAction: "alert"
+      
+    - name: "Service Health Check"
+      type: "post-execution"
+      endpoints:
+        - "/health"
+        - "/ready"
+      timeout: 30000
+      retries: 3
+      
+  performanceTargets:
+    deploymentTime: 300000     # 5 minutes
+    scaleUpTime: 60000        # 1 minute
+    scaleDownTime: 120000     # 2 minutes
+    uptimeTarget: 0.999       # 99.9%
+    mttr: 3600000             # 1 hour
+    
+  resourceLimits:
+    defaultPod:
+      cpu: "500m"
+      memory: "512Mi"
+    maxPod:
+      cpu: "2000m"
+      memory: "4Gi"
+    nodePoolDefaults:
+      minNodes: 2
+      maxNodes: 10
+      diskSize: "100Gi"
+      
+  monitoringIntegrations:
+    - name: "Prometheus"
+      scrapeInterval: 30
+      retention: 15  # days
+      
+    - name: "Grafana"
+      dashboards:
+        - "kubernetes-cluster-overview"
+        - "postgis-performance"
+        - "application-metrics"
+        
+    - name: "AlertManager"
+      routes:
+        - severity: "critical"
+          channel: "pagerduty"
+        - severity: "warning"
+          channel: "slack"
+          
+  automationPolicies:
+    - name: "Auto-scaling Policy"
+      trigger: "cpu_usage > 70%"
+      action: "scale_out"
+      cooldown: 300  # seconds
+      
+    - name: "Cost Optimization"
+      trigger: "daily_schedule"
+      action: "rightsize_resources"
+      dryRun: true
+      
+    - name: "Disaster Recovery"
+      trigger: "health_check_failure"
+      action: "failover_to_secondary"
+      requiresApproval: false

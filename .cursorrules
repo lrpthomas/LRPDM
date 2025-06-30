@@ -91,3 +91,34 @@
     }
   }
 }
+
+# Claude Code Integration
+@claude_code_integration {
+  agents: {
+    primary: "gis-spatial-agent"
+    frontend: "frontend-spatial-agent"
+    database: "database-spatial-agent"
+  }
+  
+  auto_generate: {
+    spatial_endpoints: true
+    react_components: true
+    type_definitions: true
+    test_files: true
+    migrations: true
+  }
+  
+  review_triggers: {
+    - "*.sql files with spatial queries"
+    - "PostGIS schema changes"
+    - "React components with map functionality"
+    - "API routes with spatial operations"
+  }
+  
+  optimization_focus: {
+    - "PostGIS query performance"
+    - "Vector tile generation"
+    - "Map rendering performance"
+    - "Spatial index usage"
+  }
+}

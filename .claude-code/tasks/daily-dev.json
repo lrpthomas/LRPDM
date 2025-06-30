@@ -1,0 +1,48 @@
+{
+  "name": "daily-development-tasks",
+  "schedule": "on-demand",
+  "tasks": [
+    {
+      "name": "code-review",
+      "agent": "gis-spatial-agent",
+      "action": "review-spatial-code",
+      "files": ["packages/api/src/**/*.ts", "migrations/*.sql"],
+      "criteria": [
+        "PostGIS best practices",
+        "Performance optimization",
+        "Error handling",
+        "Type safety"
+      ]
+    },
+    {
+      "name": "performance-audit",
+      "agent": "database-spatial-agent", 
+      "action": "audit-spatial-queries",
+      "database": "gis_platform",
+      "focus": [
+        "Index usage",
+        "Query execution time",
+        "Geometry validation",
+        "Cache effectiveness"
+      ]
+    },
+    {
+      "name": "test-generation",
+      "agent": "gis-spatial-agent",
+      "action": "generate-missing-tests",
+      "coverage_threshold": 80,
+      "test_types": [
+        "unit",
+        "integration", 
+        "performance",
+        "spatial_accuracy"
+      ]
+    },
+    {
+      "name": "documentation-update",
+      "agent": "gis-spatial-agent",
+      "action": "update-api-docs",
+      "formats": ["openapi", "postman", "readme"]
+    }
+  ]
+}

@@ -1,0 +1,214 @@
+apiVersion: orchestration/v1
+kind: AgentConfiguration
+metadata:
+  name: quality-assurance-agent
+  version: 1.0.0
+  type: quality-assurance
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    temperature: 0.1
+    maxTokens: 150000
+    
+  capabilities:
+    - CODE_REVIEW
+    - SECURITY_SCANNING
+    - PERFORMANCE_TESTING
+    - COMPLIANCE_CHECKING
+    - TEST_GENERATION
+    
+  specializations:
+    - "Automated testing strategies"
+    - "Security vulnerability assessment"
+    - "Performance benchmarking"
+    - "Code quality analysis"
+    - "Compliance validation"
+    - "Test coverage optimization"
+    
+  systemPrompts:
+    - role: "Quality Assurance Engineer"
+      context: |
+        You are an expert in software quality assurance and testing.
+        You implement comprehensive testing strategies and quality gates.
+        You focus on security, performance, and reliability.
+        You ensure code meets standards and compliance requirements.
+      
+  constraints:
+    mandatory:
+      - "ALWAYS achieve minimum 80% code coverage"
+      - "IMPLEMENT integration tests for all API endpoints"
+      - "PERFORM security scanning on dependencies"
+      - "VALIDATE performance against SLAs"
+      - "ENSURE accessibility compliance (WCAG 2.1)"
+      - "DOCUMENT all test scenarios"
+    forbidden:
+      - "NEVER skip security tests"
+      - "AVOID testing in production without flags"
+      - "PROHIBIT hardcoded test data"
+      - "REJECT code with known vulnerabilities"
+      - "NEVER ignore failing tests"
+      
+  autonomousCapabilities:
+    - task: "Unit Test Generation"
+      conditions:
+        - "Code follows patterns"
+        - "Type definitions exist"
+        - "No external dependencies"
+      maxComplexity: 70
+      
+    - task: "Security Scanning"
+      conditions:
+        - "Dependencies defined"
+        - "SAST tools configured"
+        - "No critical vulnerabilities"
+      maxComplexity: 50
+      
+    - task: "Performance Testing"
+      conditions:
+        - "Baseline metrics exist"
+        - "Test environment available"
+        - "Load patterns defined"
+      maxComplexity: 65
+      
+    - task: "Code Review"
+      conditions:
+        - "Style guide defined"
+        - "Linting rules configured"
+        - "No complex business logic"
+      maxComplexity: 60
+      
+    - task: "Regression Testing"
+      conditions:
+        - "Test suite exists"
+        - "No breaking changes"
+        - "Automated pipeline"
+      maxComplexity: 55
+      
+  qualityGates:
+    - name: "Code Coverage"
+      type: "continuous"
+      tool: "jest"
+      thresholds:
+        statements: 80
+        branches: 75
+        functions: 80
+        lines: 80
+      failureAction: "block"
+      
+    - name: "Security Scan"
+      type: "pre-execution"
+      tools:
+        - command: "npm audit"
+          severity: "high"
+        - command: "snyk test"
+          severity: "medium"
+        - command: "trivy fs ."
+          severity: "high"
+      failureAction: "escalate"
+      
+    - name: "Linting"
+      type: "pre-execution"
+      tools:
+        - "eslint --max-warnings 0"
+        - "prettier --check ."
+        - "tsc --noEmit"
+      failureAction: "block"
+      
+    - name: "Performance Benchmark"
+      type: "post-execution"
+      benchmarks:
+        apiResponseTime:
+          p50: 100
+          p95: 200
+          p99: 500
+        throughput:
+          min: 1000  # requests/second
+        errorRate:
+          max: 0.01  # 1%
+      failureAction: "warn"
+      
+    - name: "Accessibility Check"
+      type: "post-execution"
+      tool: "axe-core"
+      violations: 0
+      failureAction: "block"
+      
+  testingStrategies:
+    unit:
+      framework: "jest"
+      coverage: 80
+      parallelization: true
+      
+    integration:
+      framework: "supertest"
+      database: "test-containers"
+      mockExternal: true
+      
+    e2e:
+      framework: "cypress"
+      browsers:
+        - "chrome"
+        - "firefox"
+        - "safari"
+      viewports:
+        - width: 375
+          height: 667
+        - width: 1920
+          height: 1080
+          
+    performance:
+      tool: "k6"
+      scenarios:
+        - name: "normal-load"
+          vus: 100
+          duration: "5m"
+        - name: "stress-test"
+          vus: 500
+          duration: "10m"
+        - name: "spike-test"
+          vus: 1000
+          duration: "2m"
+          
+    security:
+      sast: "sonarqube"
+      dast: "owasp-zap"
+      dependencies: "snyk"
+      containers: "trivy"
+      
+  complianceChecks:
+    - name: "GDPR Compliance"
+      rules:
+        - "Data minimization"
+        - "Purpose limitation"
+        - "Consent management"
+        - "Right to erasure"
+        
+    - name: "SOC2 Compliance"
+      controls:
+        - "Access controls"
+        - "Encryption at rest"
+        - "Audit logging"
+        - "Incident response"
+        
+    - name: "PCI DSS"
+      requirements:
+        - "Secure network"
+        - "Data protection"
+        - "Access control"
+        - "Monitoring"
+        
+  reportingConfig:
+    formats:
+      - "junit"
+      - "html"
+      - "json"
+      - "lcov"
+    storage: "s3://gis-platform-qa-reports"
+    retention: 90  # days
+    notifications:
+      slack:
+        channel: "#qa-reports"
+        events:
+          - "test-failure"
+          - "coverage-drop"
+          - "security-issue"

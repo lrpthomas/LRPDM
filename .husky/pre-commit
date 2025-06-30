@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Claude Code pre-commit checks
+echo "🤖 Running Claude Code spatial checks..."
+
+# Check for spatial query optimization
+if git diff --cached --name-only | grep -E '\.(sql|ts)$' | grep -q .; then
+  echo "Checking spatial queries..."
+  claude-code ask \
+    --agent database-spatial-agent \
+    "Quick review of spatial queries in: $(git diff --cached --name-only | grep -E '\.(sql|ts)$' | tr '\n' ' ')" \
+    --format brief
+fi
+
+# Validate PostGIS schema changes
+if git diff --cached --name-only | grep -E 'migration.*\.sql$' | grep -q .; then
+  echo "Validating migration scripts..."
+  claude-code ask \
+    --agent database-spatial-agent \
+    "Validate these migration scripts: $(git diff --cached --name-only | grep -E 'migration.*\.sql$' | tr '\n' ' ')" \
+    --format checklist
+fi
+
+echo "✅ Claude Code checks completed"

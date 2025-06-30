@@ -1,0 +1,24 @@
+{
+  "name": "weekly-maintenance-tasks",
+  "schedule": "weekly",
+  "tasks": [
+    {
+      "name": "dependency-audit",
+      "agent": "gis-spatial-agent",
+      "action": "audit-spatial-dependencies",
+      "packages": ["maplibre-gl", "turf", "@types/geojson"]
+    },
+    {
+      "name": "performance-benchmark",
+      "agent": "database-spatial-agent",
+      "action": "run-spatial-benchmarks",
+      "metrics": ["query_time", "index_efficiency", "tile_generation"]
+    },
+    {
+      "name": "security-review",
+      "agent": "gis-spatial-agent",
+      "action": "security-audit",
+      "focus": ["sql_injection", "geometry_validation", "api_limits"]
+    }
+  ]
+}

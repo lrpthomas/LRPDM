@@ -1,0 +1,18 @@
+{
+  "shared_agents": [
+    "gis-spatial-agent",
+    "frontend-spatial-agent", 
+    "database-spatial-agent"
+  ],
+  "code_standards": {
+    "spatial_naming_convention": "ST_ prefix for PostGIS functions",
+    "coordinate_system": "EPSG:4326 for web delivery",
+    "index_strategy": "GIST for geometry columns",
+    "validation": "Always use ST_IsValid"
+  },
+  "review_requirements": {
+    "spatial_queries": "database-spatial-agent",
+    "react_components": "frontend-spatial-agent",
+    "api_endpoints": "gis-spatial-agent"
+  }
+}

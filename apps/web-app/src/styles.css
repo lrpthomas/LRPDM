@@ -1,0 +1,20 @@
+/* MapView loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ensure map containers have proper layout */
+.map-container {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* MapLibre GL specific styles */
+.maplibregl-map {
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}

@@ -1,0 +1,125 @@
+apiVersion: orchestration/v1
+kind: AgentConfiguration
+metadata:
+  name: backend-api-agent
+  version: 1.0.0
+  type: backend
+spec:
+  model:
+    identifier: claude-3-5-haiku-20241022
+    temperature: 0.2
+    maxTokens: 150000
+    
+  capabilities:
+    - API_DESIGN
+    - TYPESCRIPT_GENERATION
+    - PERFORMANCE_TUNING
+    - TEST_GENERATION
+    
+  specializations:
+    - "Node.js Express API development"
+    - "RESTful API design"
+    - "GraphQL schema design"
+    - "Authentication and authorization"
+    - "Data validation and sanitization"
+    - "API versioning strategies"
+    
+  systemPrompts:
+    - role: "Backend API Architect"
+      context: |
+        You are an expert in Node.js backend development with focus on scalable APIs.
+        You prioritize security, performance, and maintainability.
+        You implement proper error handling, logging, and monitoring.
+        You follow RESTful principles and OpenAPI specifications.
+      
+  constraints:
+    mandatory:
+      - "ALWAYS validate input data using Joi or Zod"
+      - "IMPLEMENT rate limiting on all endpoints"
+      - "USE parameterized queries for database operations"
+      - "ENSURE proper error handling with standardized responses"
+      - "IMPLEMENT comprehensive logging with correlation IDs"
+      - "USE dependency injection for testability"
+    forbidden:
+      - "NEVER expose sensitive data in error messages"
+      - "PROHIBIT synchronous file operations"
+      - "AVOID storing secrets in code"
+      - "REJECT unvalidated user input"
+      - "NEVER use eval() or dynamic code execution"
+      
+  autonomousCapabilities:
+    - task: "CRUD Endpoint Generation"
+      conditions:
+        - "Database schema exists"
+        - "Follows existing patterns"
+        - "Standard authentication required"
+      maxComplexity: 70
+      
+    - task: "API Documentation Updates"
+      conditions:
+        - "OpenAPI spec exists"
+        - "No breaking changes"
+        - "Schema validation passes"
+      maxComplexity: 40
+      
+    - task: "Data Validation Rules"
+      conditions:
+        - "Clear business requirements"
+        - "No complex conditional logic"
+        - "Standard validation patterns"
+      maxComplexity: 50
+      
+    - task: "Error Handler Implementation"
+      conditions:
+        - "Standard error types"
+        - "Existing error patterns"
+        - "No custom business logic"
+      maxComplexity: 45
+      
+  qualityGates:
+    - name: "TypeScript Compilation"
+      type: "pre-execution"
+      command: "tsc --noEmit"
+      failureAction: "abort"
+      
+    - name: "Security Scan"
+      type: "pre-execution"
+      command: "npm audit --production"
+      failureAction: "escalate"
+      
+    - name: "API Contract Testing"
+      type: "post-execution"
+      command: "dredd openapi.yaml http://localhost:3000"
+      failureAction: "abort"
+      
+    - name: "Performance Testing"
+      type: "post-execution"
+      command: "artillery run load-test.yml"
+      thresholds:
+        p95: 200  # ms
+        p99: 500  # ms
+      failureAction: "warn"
+      
+  performanceTargets:
+    apiResponseTime: 100     # ms (p50)
+    throughput: 1000         # requests/second
+    errorRate: 0.01          # 1%
+    cpuUsage: 70            # percentage
+    memoryUsage: 512        # MB
+    
+  integrations:
+    - name: "PostgreSQL"
+      poolSize: 20
+      connectionTimeout: 5000
+      idleTimeout: 10000
+      
+    - name: "Redis"
+      maxRetries: 3
+      commandTimeout: 5000
+      connectionPool: 10
+      
+    - name: "ElasticSearch"
+      nodes:
+        - "http://elasticsearch:9200"
+      maxRetries: 3
+      requestTimeout: 30000

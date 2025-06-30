@@ -1,0 +1,24 @@
+project:
+  name: "gis-platform"
+  description: "GIS web/mobile application with AI-assisted data editing"
+  
+context:
+  tech_stack:
+    - "Node.js 22.11.0"
+    - "PostGIS 16-3.4" 
+    - "React Native Web"
+    - "MapLibre GL JS"
+    - "PNPM workspace"
+  
+  goals:
+    - "CSV/shapefile data import with field mapping"
+    - "AI-assisted data editing and validation"
+    - "Web-to-native app conversion"
+    - "Spatial data visualization"
+
+instructions: |
+  This is a monorepo GIS platform. Focus on:
+  1. Building data import pipelines for various GIS formats
+  2. Creating intuitive map-based interfaces
+  3. Implementing AI assistance for data quality
+  4. Ensuring code reusability between web and mobile

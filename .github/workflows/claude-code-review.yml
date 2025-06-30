@@ -1,0 +1,79 @@
+name: Claude Code Review
+on:
+  pull_request:
+    paths:
+      - 'packages/api/**/*.ts'
+      - 'packages/web/**/*.tsx'
+      - 'migrations/*.sql'
+      - '**/*.sql'
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Claude Code
+        run: npm install -g @anthropic/claude-code
+      
+      - name: Configure Claude Code
+        run: |
+          claude-code config set model claude-3-5-sonnet-20241022
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      - name: Spatial Code Review
+        run: |
+          claude-code review \
+            --agent gis-spatial-agent \
+            --files $(git diff --name-only origin/main) \
+            --format github-comment \
+            --output review-comments.json
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      - name: Performance Audit
+        run: |
+          claude-code ask \
+            --agent database-spatial-agent \
+            "Audit these files for spatial performance issues: $(git diff --name-only origin/main | grep -E '\.(sql|ts)$')" \
+            --output performance-audit.md
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read review comments
+            const reviewData = JSON.parse(fs.readFileSync('review-comments.json', 'utf8'));
+            const performanceAudit = fs.readFileSync('performance-audit.md', 'utf8');
+            
+            const comment = `
+            ## 🤖 Claude Code Review
+            
+            ### Spatial Code Analysis
+            ${reviewData.summary}
+            
+            ### Performance Audit
+            ${performanceAudit}
+            
+            ### Recommendations
+            ${reviewData.recommendations.map(r => `- ${r}`).join('\n')}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
