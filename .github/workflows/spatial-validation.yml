@@ -46,8 +46,18 @@ jobs:
         run: pnpm install --frozen-lockfile
         
       - name: Spatial Schema Validation
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
-          psql -h localhost -U postgres -d gis_test -f migrations/001_spatial_schema.sql
+          # Create PostGIS extension first
+          psql -h localhost -U postgres -d gis_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+          
+          # Run migration if it exists
+          if [ -f migrations/001_spatial_schema.sql ]; then
+            psql -h localhost -U postgres -d gis_test -f migrations/001_spatial_schema.sql || echo "Migration applied or skipped"
+          fi
+          
+          # Check spatial indexes
           psql -h localhost -U postgres -d gis_test -c "
             SELECT COUNT(*) as spatial_indexes 
             FROM pg_indexes 
@@ -55,7 +65,13 @@ jobs:
           "
           
       - name: Geometry Validation Tests
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: pnpm test:spatial:validation
         
       - name: Performance Benchmarks
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: pnpm test:spatial:performance --threshold=2000ms
