@@ -1,0 +1,16 @@
+# Temporarily disabled - needs configuration
+# To re-enable:
+# 1. Add POSTGRES_PASSWORD secret in GitHub repository settings
+# 2. Add test scripts to package.json:
+#    - "test:spatial:validation": "your-test-command"
+#    - "test:spatial:performance": "your-test-command"
+# 3. Rename this file back to spatial-validation.yml
+
+name: Spatial Data Validation Pipeline
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Rest of the workflow content...
