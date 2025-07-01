@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""
+Claude CLI wrapper - Delegates to the appropriate Python implementation
+This script mimics the expected claude CLI interface
+"""
+import os
+import sys
+
+# Add the scripts directory to Python path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_dir)
+
+# Import and run the agent module
+from claude_agent import main
+
+if __name__ == '__main__':
+    main()

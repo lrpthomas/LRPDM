@@ -49,27 +49,27 @@ jobs:
               labels: ['claude-agent', 'claude-daily-task', 'automation'],
               body: `Target Agent: QRA-001 (Quality Review)
               
-Task Specification:
-Coordinate and execute daily development tasks for ${today}.
-
-## Tasks to Execute:
-
-${dailyTasks.tasks.map(task => `### ${task.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-- Focus: ${task.focus ? task.focus.join(', ') : task.criteria ? task.criteria.join(', ') : 'Standard review'}
-- Scope: ${task.files ? task.files.join(', ') : task.database || 'Full project'}
-${task.coverage_threshold ? `- Coverage Target: ${task.coverage_threshold}%` : ''}
-`).join('\n')}
-
-## Execution Plan:
-1. Each task will be executed by the appropriate agent
-2. Results will be consolidated into a daily report
-3. Any issues found will generate follow-up tasks
-4. Performance metrics will be tracked
-
-Execution Constraints:
-- Complete all tasks within 4 hours
-- Generate comprehensive report
-- Create issues for any problems found`
+              Task Specification:
+              Coordinate and execute daily development tasks for ${today}.
+              
+              ## Tasks to Execute:
+              
+              ${dailyTasks.tasks.map(task => '### ' + task.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + '\n' +
+              '              - Focus: ' + (task.focus ? task.focus.join(', ') : task.criteria ? task.criteria.join(', ') : 'Standard review') + '\n' +
+              '              - Scope: ' + (task.files ? task.files.join(', ') : task.database || 'Full project') +
+              (task.coverage_threshold ? '\n              - Coverage Target: ' + task.coverage_threshold + '%' : '')
+              ).join('\n')}
+              
+              ## Execution Plan:
+              1. Each task will be executed by the appropriate agent
+              2. Results will be consolidated into a daily report
+              3. Any issues found will generate follow-up tasks
+              4. Performance metrics will be tracked
+              
+              Execution Constraints:
+              - Complete all tasks within 4 hours
+              - Generate comprehensive report
+              - Create issues for any problems found`
             });
             
             console.log(`Created daily task batch: ${batchIssue.data.html_url}`);
@@ -81,74 +81,74 @@ Execution Constraints:
               
               let taskBody = `Target Agent: ${agent} (${agent === 'QRA-001' ? 'Quality Review' : 'Development'})
 
-Task Specification:
-Execute daily ${taskTitle.toLowerCase()} for ${today}.
-
-`;
+              Task Specification:
+              Execute daily ${taskTitle.toLowerCase()} for ${today}.
+              
+              `;
 
               // Add task-specific details
               switch (task.name) {
                 case 'code-review':
                   taskBody += `## Review Scope:
-${task.files.map(f => `- ${f}`).join('\n')}
-
-## Review Criteria:
-${task.criteria.map(c => `- ${c}`).join('\n')}
-
-## Expected Output:
-- Code quality report
-- List of issues found
-- Suggested improvements
-- Performance optimization opportunities`;
+                  ${task.files.map(f => '- ' + f).join('\n                  ')}
+                  
+                  ## Review Criteria:
+                  ${task.criteria.map(c => '- ' + c).join('\n                  ')}
+                  
+                  ## Expected Output:
+                  - Code quality report
+                  - List of issues found
+                  - Suggested improvements
+                  - Performance optimization opportunities`;
                   break;
                   
                 case 'performance-audit':
                   taskBody += `## Audit Database: ${task.database}
-
-## Focus Areas:
-${task.focus.map(f => `- ${f}`).join('\n')}
-
-## Expected Output:
-- Query performance report
-- Slow query identification
-- Index recommendations
-- Optimization suggestions`;
+                  
+                  ## Focus Areas:
+                  ${task.focus.map(f => '- ' + f).join('\n                  ')}
+                  
+                  ## Expected Output:
+                  - Query performance report
+                  - Slow query identification
+                  - Index recommendations
+                  - Optimization suggestions`;
                   break;
                   
                 case 'test-generation':
                   taskBody += `## Coverage Target: ${task.coverage_threshold}%
-
-## Test Types:
-${task.test_types.map(t => `- ${t}`).join('\n')}
-
-## Expected Output:
-- New test files created
-- Coverage report
-- Test execution results
-- Areas still needing coverage`;
+                  
+                  ## Test Types:
+                  ${task.test_types.map(t => '- ' + t).join('\n                  ')}
+                  
+                  ## Expected Output:
+                  - New test files created
+                  - Coverage report
+                  - Test execution results
+                  - Areas still needing coverage`;
                   break;
                   
                 case 'documentation-update':
                   taskBody += `## Documentation Formats:
-${task.formats.map(f => `- ${f}`).join('\n')}
-
-## Expected Output:
-- Updated API documentation
-- Changelog entries
-- README updates
-- API collection exports`;
+                  ${task.formats.map(f => '- ' + f).join('\n                  ')}
+                  
+                  ## Expected Output:
+                  - Updated API documentation
+                  - Changelog entries
+                  - README updates
+                  - API collection exports`;
                   break;
               }
               
               taskBody += `
-
-Execution Constraints:
-- Complete within 1 hour
-- Maintain code quality standards
-- Follow project conventions
-- Update tracking issue with results
-
-Parent Issue: #${batchIssue.data.number}`;
+              
+              Execution Constraints:
+              - Complete within 1 hour
+              - Maintain code quality standards
+              - Follow project conventions
+              - Update tracking issue with results
+              
+              Parent Issue: #${batchIssue.data.number}`;
 
               const issue = await github.rest.issues.create({
                 owner: context.repo.owner,

@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "permissions": {
+    "allow": [
+      "// Add your personal development commands here",
+      "// Example: Bash(your-custom-script.sh)"
+    ]
+  },
+  "context": {
+    "developer": "your-name",
+    "localEnvironment": {
+      "// Add your local environment specifics": "",
+      "// Example: dockerPath": "/usr/local/bin/docker"
+    }
+  },
+  "shortcuts": {
+    "// Add your personal shortcuts": "",
+    "// Example: db": "docker exec -it postgres psql -U postgres"
+  }
+}

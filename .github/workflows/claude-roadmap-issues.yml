@@ -147,26 +147,26 @@ jobs:
                 }
                 
                 const issueBody = `Target Agent: ${config.agent} (${config.agent === 'OPS-003' ? 'Operations' : 'Development'})
-
-Task Specification:
-${taskInfo.task}
-
-Implementation Phase: ${config.title}
-Timeline: ${taskInfo.week}
-Roadmap Reference: Weeks ${config.weeks}
-
-This task is part of the Claude orchestration framework implementation roadmap.
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed
-
-Success Criteria:
-- Task completed according to roadmap specifications
-- All quality gates passed
-- Documentation updated
-- No regression in existing functionality`;
+                
+                Task Specification:
+                ${taskInfo.task}
+                
+                Implementation Phase: ${config.title}
+                Timeline: ${taskInfo.week}
+                Roadmap Reference: Weeks ${config.weeks}
+                
+                This task is part of the Claude orchestration framework implementation roadmap.
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed
+                
+                Success Criteria:
+                - Task completed according to roadmap specifications
+                - All quality gates passed
+                - Documentation updated
+                - No regression in existing functionality`;
                 
                 try {
                   const issue = await github.rest.issues.create({
@@ -197,34 +197,34 @@ Success Criteria:
                 title: summaryTitle,
                 body: `Target Agent: QRA-001 (Quality Review)
 
-Task Specification:
-Monitor and track the implementation progress of the Claude orchestration framework across all phases.
-
-## Implementation Phases
-
-### Phase 1: Foundation (Weeks 1-4)
-Establish core infrastructure and baseline capabilities
-
-### Phase 2: Supervised Autonomy (Weeks 5-10)
-Enable autonomous actions for low-risk tasks
-
-### Phase 3: Managed Autonomy (Weeks 11-18)
-Expand autonomous capabilities to medium-risk tasks
-
-### Phase 4: Full Autonomy (Weeks 19-24)
-Achieve full autonomy within defined boundaries
-
-## Tracking
-- All roadmap tasks have been created as individual GitHub issues
-- Each phase has its own milestone
-- Progress can be tracked through the Projects board
-- Agents will automatically work on tasks labeled with 'claude-agent'
-
-Execution Constraints:
-- Monitor overall progress
-- Ensure phase dependencies are respected
-- Track success metrics for each phase
-- Generate weekly progress reports`,
+                Task Specification:
+                Monitor and track the implementation progress of the Claude orchestration framework across all phases.
+                
+                ## Implementation Phases
+                
+                ### Phase 1: Foundation (Weeks 1-4)
+                Establish core infrastructure and baseline capabilities
+                
+                ### Phase 2: Supervised Autonomy (Weeks 5-10)
+                Enable autonomous actions for low-risk tasks
+                
+                ### Phase 3: Managed Autonomy (Weeks 11-18)
+                Expand autonomous capabilities to medium-risk tasks
+                
+                ### Phase 4: Full Autonomy (Weeks 19-24)
+                Achieve full autonomy within defined boundaries
+                
+                ## Tracking
+                - All roadmap tasks have been created as individual GitHub issues
+                - Each phase has its own milestone
+                - Progress can be tracked through the Projects board
+                - Agents will automatically work on tasks labeled with 'claude-agent'
+                
+                Execution Constraints:
+                - Monitor overall progress
+                - Ensure phase dependencies are respected
+                - Track success metrics for each phase
+                - Generate weekly progress reports`,
                 labels: ['claude-agent', 'claude-roadmap', 'tracking', 'high-priority'],
                 pinned: true
               });

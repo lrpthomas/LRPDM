@@ -181,10 +181,10 @@ jobs:
               # Format response
               comment_body = f"""## 🤖 {agent_config['name']} Analysis
               
-{response_text}
-
----
-*Agent: {agent_id} | Model: claude-3-5-sonnet-20241022 | Processed at: {time.strftime('%Y-%m-%d %H:%M:%S UTC')}*"""
+              {response_text}
+              
+              ---
+              *Agent: {agent_id} | Model: claude-3-5-sonnet-20241022 | Processed at: {time.strftime('%Y-%m-%d %H:%M:%S UTC')}*"""
               
               # Post comment
               comment_response = requests.post(

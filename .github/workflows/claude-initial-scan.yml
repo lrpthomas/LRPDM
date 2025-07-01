@@ -33,46 +33,46 @@ jobs:
                 labels: ['claude-agent', 'automation', 'initial-scan', 'high-priority'],
                 body: `Target Agent: QRA-001 (Quality Review)
                 
-Task Specification:
-Perform a comprehensive analysis of the LRPDM GIS Platform project to identify all issues that need to be addressed.
-
-Analysis Required:
-1. **Code Quality**
-   - TypeScript compilation errors
-   - ESLint warnings
-   - Code duplication
-   - Complexity metrics
-   
-2. **Security**
-   - Dependency vulnerabilities
-   - Secret scanning
-   - OWASP compliance
-   
-3. **Test Coverage**
-   - Current coverage percentage
-   - Untested critical paths
-   - Missing test files
-   
-4. **Performance**
-   - Bundle size analysis
-   - Database query optimization needs
-   - Memory usage patterns
-   
-5. **Infrastructure**
-   - Docker configuration issues
-   - Missing environment variables
-   - Deployment readiness
-
-Expected Output:
-Generate separate issues for each category of problems found, tagged with appropriate agents:
-- DEV-002 for development tasks
-- OPS-003 for infrastructure/deployment tasks
-- QRA-001 for ongoing quality monitoring
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Perform a comprehensive analysis of the LRPDM GIS Platform project to identify all issues that need to be addressed.
+                
+                Analysis Required:
+                1. **Code Quality**
+                   - TypeScript compilation errors
+                   - ESLint warnings
+                   - Code duplication
+                   - Complexity metrics
+                   
+                2. **Security**
+                   - Dependency vulnerabilities
+                   - Secret scanning
+                   - OWASP compliance
+                   
+                3. **Test Coverage**
+                   - Current coverage percentage
+                   - Untested critical paths
+                   - Missing test files
+                   
+                4. **Performance**
+                   - Bundle size analysis
+                   - Database query optimization needs
+                   - Memory usage patterns
+                   
+                5. **Infrastructure**
+                   - Docker configuration issues
+                   - Missing environment variables
+                   - Deployment readiness
+                
+                Expected Output:
+                Generate separate issues for each category of problems found, tagged with appropriate agents:
+                - DEV-002 for development tasks
+                - OPS-003 for infrastructure/deployment tasks
+                - QRA-001 for ongoing quality monitoring
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
               
               // Create immediate TypeScript fix issue since we know there are errors
@@ -83,26 +83,26 @@ Execution Constraints:
                 labels: ['claude-agent', 'automation', 'typescript-errors', 'high-priority'],
                 body: `Target Agent: DEV-002 (Development)
                 
-Task Specification:
-Fix the TypeScript compilation errors that are preventing the build from completing successfully.
-
-Known Issues:
-1. Missing fastify type declarations in csvUploadController.ts
-2. Express type inference errors in multiple route files
-3. Incorrect export in fileValidation module
-4. Type coercion issues in notification routes
-5. Router type annotations needed
-
-Required Actions:
-- Install missing @types packages
-- Add proper type annotations to all routers
-- Fix import/export mismatches
-- Resolve type coercion with proper type guards
-- Ensure pnpm build completes with zero errors
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Fix the TypeScript compilation errors that are preventing the build from completing successfully.
+                
+                Known Issues:
+                1. Missing fastify type declarations in csvUploadController.ts
+                2. Express type inference errors in multiple route files
+                3. Incorrect export in fileValidation module
+                4. Type coercion issues in notification routes
+                5. Router type annotations needed
+                
+                Required Actions:
+                - Install missing @types packages
+                - Add proper type annotations to all routers
+                - Fix import/export mismatches
+                - Resolve type coercion with proper type guards
+                - Ensure pnpm build completes with zero errors
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
             }

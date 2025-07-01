@@ -30,11 +30,64 @@ jobs:
               issue_url: ${{ github.event.issue.html_url }}
           EOF
       
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install -r .claude/requirements.txt
+          
       - name: Trigger Agent Execution
         env:
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         run: |
-          claude agent execute "${{ env.AGENT_ID }}" \
+          # Use the Python implementation
+          python .claude/scripts/claude agent execute "${{ env.AGENT_ID }}" \
             --task=.claude/tasks/task-${{ github.event.issue.number }}.yaml \
             --context=.claude/contexts/issue.yaml \
             --output=.claude/logs/${{ env.AGENT_ID }}-issue-${{ github.event.issue.number }}.json
+            
+      - name: Post Results to Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read the output file
+            const outputFile = `.claude/logs/${{ env.AGENT_ID }}-issue-${{ github.event.issue.number }}.json`;
+            let result;
+            
+            try {
+              const content = fs.readFileSync(outputFile, 'utf8');
+              result = JSON.parse(content);
+            } catch (error) {
+              console.error('Failed to read agent output:', error);
+              result = { success: false, error: error.message };
+            }
+            
+            // Format the comment
+            let comment = `## 🤖 Claude Agent Response\n\n`;
+            comment += `**Agent**: ${result.agent_id || 'Unknown'}\n`;
+            comment += `**Status**: ${result.success ? '✅ Success' : '❌ Failed'}\n`;
+            comment += `**Duration**: ${result.duration_seconds || 'N/A'} seconds\n\n`;
+            
+            if (result.response) {
+              comment += `### Response\n\n${result.response}\n`;
+            }
+            
+            if (result.error) {
+              comment += `### Error\n\n\`\`\`\n${result.error}\n\`\`\`\n`;
+            }
+            
+            comment += `\n---\n*Executed by Claude Agent System at ${new Date().toISOString()}*`;
+            
+            // Post the comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: comment
+            });

@@ -1,0 +1,28 @@
+apiVersion: claude/v1
+kind: Context
+metadata:
+  name: ci-context
+  description: Context for CI/CD pipeline executions
+spec:
+  environment:
+    type: github_actions
+    workflow: ${{ github.workflow }}
+    run_id: ${{ github.run_id }}
+    run_number: ${{ github.run_number }}
+    
+  repository:
+    name: ${{ github.repository }}
+    branch: ${{ github.ref_name }}
+    sha: ${{ github.sha }}
+    
+  trigger:
+    event: ${{ github.event_name }}
+    actor: ${{ github.actor }}
+    
+  constraints:
+    timeout_minutes: 30
+    max_retries: 3
+    
+  security:
+    secrets_masking: true
+    audit_logging: true

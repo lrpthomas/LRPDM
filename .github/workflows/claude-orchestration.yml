@@ -52,6 +52,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install -r .claude/requirements.txt
+          
       - name: Execute Claude Agent
         env:
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
@@ -59,7 +68,8 @@ jobs:
           agent_file=$(basename "${{ matrix.agent }}")
           agent_id="${agent_file%%-*}"
           
-          claude agent execute "$agent_id" \
+          # Use the Python implementation
+          python .claude/scripts/claude agent execute "$agent_id" \
             --context=.claude/contexts/ci.yaml \
             --output=.claude/logs/"$agent_id"-${{ github.run_id }}.json \
             --metrics=.claude/logs/"$agent_id"-metrics.json

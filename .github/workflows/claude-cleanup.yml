@@ -8,21 +8,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Disable Non-Working Workflows
+      - name: Check Workflow Status
         run: |
-          # Create a file to mark which workflows to disable
-          cat > disabled-workflows.txt << 'EOF'
-          # These workflows use non-existent claude CLI and should be disabled
-          # until properly implemented:
+          # Create a status report
+          cat > workflow-status.txt << 'EOF'
+          # Claude Workflow Status Report
           
-          claude-orchestration.yml - Uses "claude agent execute" command
-          issue-to-agent.yml - Uses "claude agent execute" command
+          ## Fixed Workflows (Now using Python implementation):
+          ✅ claude-orchestration.yml - Updated to use Python claude_agent.py
+          ✅ issue-to-agent.yml - Updated to use Python claude_agent.py
           
-          # To re-enable, update these workflows to use the enhanced agent
-          # implementation that calls the Anthropic API directly
+          ## Implementation Details:
+          - Location: .claude/scripts/claude_agent.py
+          - Dependencies: anthropic, pyyaml
+          - Command: python .claude/scripts/claude agent execute <agent_id>
+          
+          ## Requirements:
+          - CLAUDE_API_KEY secret must be set in GitHub
+          - Python 3.11+ required
+          - Agent specs must exist in .claude/agents/specs/
+          
+          Last updated: $(date)
           EOF
           
-          echo "✅ Cleanup notes created. Please manually disable non-working workflows in GitHub UI"
+          echo "✅ Workflow status report created"
+          cat workflow-status.txt
           
       - name: Close Stuck Issues
         uses: actions/github-script@v6
@@ -60,16 +70,16 @@ jobs:
                     issue_number: issue.number,
                     body: `## 🔧 Workflow Update Required
                     
-This issue was created before the Claude agent system was properly configured. The original workflows used a non-existent CLI tool.
-
-**Status**: Closing this issue as the workflow has been updated.
-
-**To retry this task**:
-1. Create a new issue with the same content
-2. Make sure it has the \`claude-agent\` label
-3. The enhanced agent workflow will process it
-
-*Closed by cleanup workflow*`
+                    This issue was created before the Claude agent system was properly configured. The original workflows used a non-existent CLI tool.
+                    
+                    **Status**: Closing this issue as the workflow has been updated.
+                    
+                    **To retry this task**:
+                    1. Create a new issue with the same content
+                    2. Make sure it has the \`claude-agent\` label
+                    3. The enhanced agent workflow will process it
+                    
+                    *Closed by cleanup workflow*`
                   });
                   
                   // Close the issue

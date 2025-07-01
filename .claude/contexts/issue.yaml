@@ -1,0 +1,25 @@
+apiVersion: claude/v1
+kind: Context
+metadata:
+  name: issue-context
+  description: Context for processing GitHub issues
+spec:
+  issue:
+    number: ${{ github.event.issue.number }}
+    title: ${{ github.event.issue.title }}
+    author: ${{ github.event.issue.user.login }}
+    created_at: ${{ github.event.issue.created_at }}
+    labels: ${{ github.event.issue.labels }}
+    
+  repository:
+    name: ${{ github.repository }}
+    default_branch: ${{ github.event.repository.default_branch }}
+    
+  permissions:
+    issues: write
+    pull_requests: read
+    contents: read
+    
+  constraints:
+    response_time_minutes: 15
+    max_comment_length: 65536

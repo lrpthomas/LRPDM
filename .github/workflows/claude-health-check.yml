@@ -120,18 +120,18 @@ jobs:
                 labels: ['claude-health', 'urgent'],
                 body: `## System Health Report
                 
-### Workflow Status
-${{ steps.check-workflows.outputs.report }}
-
-### Stuck Issues
-Found ${{ steps.check-issues.outputs.stuck_count }} issues without agent responses
-
-### Recommended Actions
-1. Check GitHub Actions logs for errors
-2. Verify CLAUDE_API_KEY is valid
-3. Review stuck issues and manually trigger agents
-4. Check API rate limits
-
-Generated at: ${new Date().toISOString()}`
+                ### Workflow Status
+                ${{ steps.check-workflows.outputs.report }}
+                
+                ### Stuck Issues
+                Found ${{ steps.check-issues.outputs.stuck_count }} issues without agent responses
+                
+                ### Recommended Actions
+                1. Check GitHub Actions logs for errors
+                2. Verify CLAUDE_API_KEY is valid
+                3. Review stuck issues and manually trigger agents
+                4. Check API rate limits
+                
+                Generated at: ${new Date().toISOString()}`
               });
             }
