@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { db as knex } from '../config/database';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const registerSchema = z.object({

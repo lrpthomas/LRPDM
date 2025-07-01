@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db as knex } from '../config/database';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const createNotificationSchema = z.object({
@@ -29,8 +29,8 @@ const notificationQuerySchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   isRead: z.string().transform(val => val === 'true').optional(),
   relatedEntityType: z.string().optional(),
-  limit: z.string().transform(Number).default(50),
-  offset: z.string().transform(Number).default(0),
+  limit: z.string().transform(Number).default('50'),
+  offset: z.string().transform(Number).default('0'),
   sortBy: z.enum(['created_at', 'scheduled_for', 'priority']).default('created_at'),
   sortOrder: z.enum(['asc', 'desc']).default('desc')
 });

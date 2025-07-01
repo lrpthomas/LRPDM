@@ -3,7 +3,7 @@ import { upload, uploadFile } from '../controllers/enhancedUploadController';
 import { importFile } from '../controllers/importController';
 import { getAllSupportedTypes } from '../utils/fileValidation';
 
-const router = Router();
+const router: Router = Router();
 
 // Enhanced upload endpoint that supports multiple file formats (preview only)
 router.post('/file', upload.single('file'), uploadFile as any);

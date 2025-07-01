@@ -7,7 +7,7 @@ import GISProcessor, { ProcessingResult } from '../utils/gisProcessor';
 import GISExporter, { ExportOptions } from '../utils/gisExporter';
 import { db as knex } from '../config/database';
 
-const router = Router();
+const router: Router = Router();
 
 // Configure multer for file uploads
 const upload = multer({
