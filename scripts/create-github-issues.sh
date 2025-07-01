@@ -5,6 +5,8 @@
 
 set -e
 
+# Ensure the script runs from its own directory
+cd "$(dirname "$0")"
 echo "🔍 Creating GitHub Issues for Code Quality Problems"
 echo "=================================================="
 
