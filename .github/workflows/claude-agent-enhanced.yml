@@ -1,0 +1,266 @@
+name: Claude Agent Enhanced
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: false
+
+jobs:
+  process-agent-task:
+    if: contains(github.event.issue.labels.*.name, 'claude-agent') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-anthropic
+          
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests tenacity
+          
+      - name: Process Claude Task
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > enhanced_claude_agent.py << 'EOF'
+          import os
+          import json
+          import re
+          import time
+          import requests
+          from anthropic import Anthropic, RateLimitError, APIError
+          from tenacity import retry, stop_after_attempt, wait_exponential
+          
+          # Configuration
+          MAX_RETRIES = 3
+          RETRY_WAIT_MIN = 1
+          RETRY_WAIT_MAX = 10
+          
+          # Get issue details
+          if "${{ github.event_name }}" == "workflow_dispatch":
+              issue_number = "${{ github.event.inputs.issue_number }}"
+              if not issue_number:
+                  print("No issue number provided for manual trigger")
+                  exit(1)
+          else:
+              issue_number = "${{ github.event.issue.number }}"
+              
+          print(f"Processing issue #{issue_number}")
+          
+          # Initialize clients
+          github_token = os.environ['GITHUB_TOKEN']
+          github_headers = {
+              "Authorization": f"token {github_token}",
+              "Accept": "application/vnd.github.v3+json"
+          }
+          
+          # Fetch issue details
+          issue_url = f"https://api.github.com/repos/${{ github.repository }}/issues/{issue_number}"
+          issue_response = requests.get(issue_url, headers=github_headers)
+          
+          if issue_response.status_code != 200:
+              print(f"Failed to fetch issue: {issue_response.status_code}")
+              exit(1)
+              
+          issue_data = issue_response.json()
+          issue_title = issue_data['title']
+          issue_body = issue_data['body'] or ""
+          issue_labels = [label['name'] for label in issue_data['labels']]
+          
+          # Check if already processed
+          comments_url = f"{issue_url}/comments"
+          comments_response = requests.get(comments_url, headers=github_headers)
+          existing_comments = comments_response.json() if comments_response.status_code == 200 else []
+          
+          if any("Claude Agent" in comment.get('body', '') for comment in existing_comments):
+              print("Issue already processed by Claude agent")
+              exit(0)
+          
+          # Parse agent type
+          agent_match = re.search(r'Target Agent:\s*([A-Z]{3}-\d{3})', issue_body)
+          if not agent_match:
+              # Try to infer agent from labels
+              if 'development' in issue_labels or 'bug' in issue_labels:
+                  agent_id = "DEV-002"
+              elif 'infrastructure' in issue_labels or 'deployment' in issue_labels:
+                  agent_id = "OPS-003"
+              else:
+                  agent_id = "QRA-001"
+              print(f"No agent specified, defaulting to {agent_id}")
+          else:
+              agent_id = agent_match.group(1)
+              
+          print(f"Using agent: {agent_id}")
+          
+          # Agent configurations
+          agents = {
+              "QRA-001": {
+                  "name": "Quality Review Agent",
+                  "prompt": "You are a Quality Review Agent. Analyze code quality, test coverage, security vulnerabilities, and performance. Provide specific, actionable feedback.",
+                  "focus": ["code quality", "testing", "security", "performance"]
+              },
+              "DEV-002": {
+                  "name": "Development Agent",
+                  "prompt": "You are a Development Agent. Your job is to fix bugs, implement features, write tests, and update documentation. Provide code solutions when applicable.",
+                  "focus": ["bug fixes", "feature implementation", "test writing", "documentation"]
+              },
+              "OPS-003": {
+                  "name": "Operations Agent",
+                  "prompt": "You are an Operations Agent. Handle deployments, infrastructure provisioning, monitoring setup, and system configuration. Focus on reliability and scalability.",
+                  "focus": ["deployment", "infrastructure", "monitoring", "configuration"]
+              }
+          }
+          
+          agent_config = agents.get(agent_id, agents["QRA-001"])
+          
+          # Initialize Claude client
+          try:
+              client = Anthropic(api_key=os.environ['CLAUDE_API_KEY'])
+          except Exception as e:
+              print(f"Failed to initialize Claude client: {e}")
+              # Post error comment
+              error_body = f"## ❌ Agent Initialization Error\\n\\nFailed to initialize Claude agent. Please check the API key configuration."
+              requests.post(comments_url, headers=github_headers, json={"body": error_body})
+              exit(1)
+          
+          # Prepare prompt
+          prompt = f"""
+          {agent_config['prompt']}
+          
+          GitHub Issue #{issue_number}: {issue_title}
+          
+          Task Description:
+          {issue_body}
+          
+          Labels: {', '.join(issue_labels)}
+          
+          Please provide:
+          1. Analysis of the task/issue
+          2. Proposed solution or action plan
+          3. Implementation steps (if applicable)
+          4. Testing/validation approach
+          5. Success criteria
+          
+          Focus areas for this agent: {', '.join(agent_config['focus'])}
+          
+          Format your response for a GitHub comment using markdown.
+          """
+          
+          # Retry logic for API calls
+          @retry(
+              stop=stop_after_attempt(MAX_RETRIES),
+              wait=wait_exponential(multiplier=1, min=RETRY_WAIT_MIN, max=RETRY_WAIT_MAX)
+          )
+          def call_claude_api():
+              return client.messages.create(
+                  model="claude-3-5-sonnet-20241022",
+                  max_tokens=4000,
+                  messages=[{"role": "user", "content": prompt}]
+              )
+          
+          # Call Claude API with retries
+          try:
+              print("Calling Claude API...")
+              message = call_claude_api()
+              response_text = message.content[0].text
+              print("Successfully received response from Claude")
+              
+              # Format response
+              comment_body = f"""## 🤖 {agent_config['name']} Analysis
+              
+{response_text}
+
+---
+*Agent: {agent_id} | Model: claude-3-5-sonnet-20241022 | Processed at: {time.strftime('%Y-%m-%d %H:%M:%S UTC')}*"""
+              
+              # Post comment
+              comment_response = requests.post(
+                  comments_url,
+                  headers=github_headers,
+                  json={"body": comment_body}
+              )
+              
+              if comment_response.status_code == 201:
+                  print("Successfully posted agent analysis")
+                  
+                  # Add labels based on agent response
+                  labels_to_add = []
+                  if "bug" in response_text.lower() and "bug" not in issue_labels:
+                      labels_to_add.append("bug")
+                  if "security" in response_text.lower() and "security" not in issue_labels:
+                      labels_to_add.append("security")
+                  if "performance" in response_text.lower() and "performance" not in issue_labels:
+                      labels_to_add.append("performance")
+                  if agent_id == "DEV-002":
+                      labels_to_add.append("in-development")
+                  
+                  if labels_to_add:
+                      requests.post(
+                          f"{issue_url}/labels",
+                          headers=github_headers,
+                          json={"labels": labels_to_add}
+                      )
+              else:
+                  print(f"Failed to post comment: {comment_response.status_code}")
+                  print(comment_response.text)
+                  
+          except RateLimitError as e:
+              print(f"Rate limit error: {e}")
+              error_body = "## ⏳ Rate Limit Reached\\n\\nThe Claude API rate limit has been reached. Please try again later."
+              requests.post(comments_url, headers=github_headers, json={"body": error_body})
+              exit(1)
+              
+          except APIError as e:
+              print(f"API error: {e}")
+              error_body = f"## ❌ API Error\\n\\nClaude API error: {str(e)}"
+              requests.post(comments_url, headers=github_headers, json={"body": error_body})
+              exit(1)
+              
+          except Exception as e:
+              print(f"Unexpected error: {e}")
+              error_body = f"## ❌ Unexpected Error\\n\\nAn unexpected error occurred: {str(e)}"
+              requests.post(comments_url, headers=github_headers, json={"body": error_body})
+              exit(1)
+          EOF
+          
+          python enhanced_claude_agent.py
+          
+      - name: Update Issue Status
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = "${{ github.event.issue.number }}" || "${{ github.event.inputs.issue_number }}";
+            
+            // Remove processing label if exists
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parseInt(issue_number),
+                name: 'agent-processing'
+              });
+            } catch (e) {
+              // Label might not exist
+            }
+            
+            // Add processed label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(issue_number),
+              labels: ['agent-processed']
+            });

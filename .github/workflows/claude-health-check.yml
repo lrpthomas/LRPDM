@@ -1,0 +1,137 @@
+name: Claude System Health Check
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-system-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check API Key
+        id: check-api
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          if [ -z "$CLAUDE_API_KEY" ]; then
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "message=CLAUDE_API_KEY not configured" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "status=ok" >> $GITHUB_OUTPUT
+            echo "message=API key configured" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Check Workflows
+        id: check-workflows
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const workflows = [
+              'claude-agent-simulator.yml',
+              'claude-auto-discovery.yml',
+              'claude-daily-tasks.yml',
+              'claude-roadmap-issues.yml'
+            ];
+            
+            let allHealthy = true;
+            let report = [];
+            
+            for (const workflow of workflows) {
+              try {
+                const runs = await github.rest.actions.listWorkflowRuns({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: workflow,
+                  per_page: 5
+                });
+                
+                const recent = runs.data.workflow_runs[0];
+                if (recent) {
+                  report.push(`✅ ${workflow}: ${recent.status} (${recent.conclusion || 'running'})`);
+                  if (recent.conclusion === 'failure') allHealthy = false;
+                } else {
+                  report.push(`⚠️ ${workflow}: No runs found`);
+                }
+              } catch (e) {
+                report.push(`❌ ${workflow}: Error checking status`);
+                allHealthy = false;
+              }
+            }
+            
+            core.setOutput('healthy', allHealthy);
+            core.setOutput('report', report.join('\n'));
+            
+      - name: Check Recent Issues
+        id: check-issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent',
+              state: 'open',
+              per_page: 10
+            });
+            
+            let stuckCount = 0;
+            const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            
+            for (const issue of issues.data) {
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 5
+              });
+              
+              const hasAgentComment = comments.data.some(c => 
+                c.body.includes('Claude Agent') || c.body.includes('🤖')
+              );
+              
+              if (!hasAgentComment && new Date(issue.created_at) < hourAgo) {
+                stuckCount++;
+              }
+            }
+            
+            core.setOutput('stuck_count', stuckCount);
+            
+      - name: Create Health Report Issue
+        if: steps.check-workflows.outputs.healthy == 'false' || steps.check-issues.outputs.stuck_count > 0
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-health',
+              state: 'open'
+            });
+            
+            if (existingIssues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Claude System Health Alert',
+                labels: ['claude-health', 'urgent'],
+                body: `## System Health Report
+                
+### Workflow Status
+${{ steps.check-workflows.outputs.report }}
+
+### Stuck Issues
+Found ${{ steps.check-issues.outputs.stuck_count }} issues without agent responses
+
+### Recommended Actions
+1. Check GitHub Actions logs for errors
+2. Verify CLAUDE_API_KEY is valid
+3. Review stuck issues and manually trigger agents
+4. Check API rate limits
+
+Generated at: ${new Date().toISOString()}`
+              });
+            }

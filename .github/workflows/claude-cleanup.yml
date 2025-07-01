@@ -1,0 +1,92 @@
+name: Claude Cleanup Non-Working Workflows
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Disable Non-Working Workflows
+        run: |
+          # Create a file to mark which workflows to disable
+          cat > disabled-workflows.txt << 'EOF'
+          # These workflows use non-existent claude CLI and should be disabled
+          # until properly implemented:
+          
+          claude-orchestration.yml - Uses "claude agent execute" command
+          issue-to-agent.yml - Uses "claude agent execute" command
+          
+          # To re-enable, update these workflows to use the enhanced agent
+          # implementation that calls the Anthropic API directly
+          EOF
+          
+          echo "✅ Cleanup notes created. Please manually disable non-working workflows in GitHub UI"
+          
+      - name: Close Stuck Issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Find issues that are stuck (no agent response after 1 hour)
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent',
+              state: 'open',
+              per_page: 100
+            });
+            
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            let closedCount = 0;
+            
+            for (const issue of issues.data) {
+              if (new Date(issue.created_at) < oneHourAgo) {
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number
+                });
+                
+                const hasAgentComment = comments.data.some(c => 
+                  c.body.includes('Claude Agent') || c.body.includes('🤖')
+                );
+                
+                if (!hasAgentComment) {
+                  // Add explanation comment
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    body: `## 🔧 Workflow Update Required
+                    
+This issue was created before the Claude agent system was properly configured. The original workflows used a non-existent CLI tool.
+
+**Status**: Closing this issue as the workflow has been updated.
+
+**To retry this task**:
+1. Create a new issue with the same content
+2. Make sure it has the \`claude-agent\` label
+3. The enhanced agent workflow will process it
+
+*Closed by cleanup workflow*`
+                  });
+                  
+                  // Close the issue
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    state: 'closed',
+                    labels: [...issue.labels.map(l => l.name), 'workflow-update-required']
+                  });
+                  
+                  closedCount++;
+                  
+                  // Rate limit protection
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+            }
+            
+            console.log(`Closed ${closedCount} stuck issues`);

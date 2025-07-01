@@ -1,0 +1,36 @@
+#!/bin/bash
+set -euo pipefail
+
+echo -e "\033[1;34m[CLAUDE PRE-COMMIT] Initiating validation sequence...\033[0m"
+
+# Phase 1: Type safety enforcement (build TypeScript)
+if command -v pnpm &> /dev/null && [ -f "package.json" ]; then
+    if ! pnpm build; then
+        echo -e "\033[0;31m✗ TypeScript compilation failed\033[0m"
+        exit 1
+    fi
+elif command -v npm &> /dev/null && [ -f "package.json" ]; then
+    if ! npm run build; then
+        echo -e "\033[0;31m✗ TypeScript compilation failed\033[0m"
+        exit 1
+    fi
+fi
+
+# Phase 2: Test execution (if tests exist)
+if command -v pnpm &> /dev/null && [ -f "package.json" ]; then
+    if pnpm run | grep -q "test"; then
+        if ! pnpm test; then
+            echo -e "\033[0;31m✗ Tests failed\033[0m"
+            exit 1
+        fi
+    fi
+elif command -v npm &> /dev/null && [ -f "package.json" ]; then
+    if npm run | grep -q "test"; then
+        if ! npm test; then
+            echo -e "\033[0;31m✗ Tests failed\033[0m"
+            exit 1
+        fi
+    fi
+fi
+
+echo -e "\033[0;32m✓ All validation gates passed\033[0m"
