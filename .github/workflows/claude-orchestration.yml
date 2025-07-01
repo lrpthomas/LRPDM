@@ -1,0 +1,72 @@
+name: Claude Agent Orchestration Pipeline
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      agent_id:
+        description: 'Agent ID to execute'
+        required: true
+        type: choice
+        options:
+          - QRA-001
+          - DEV-002
+          - OPS-003
+          - ALL
+
+concurrency:
+  group: claude-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.agents }}
+      cache_key: ${{ steps.cache.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - id: matrix
+        run: |
+          if [[ "${{ github.event.inputs.agent_id }}" == "ALL" ]] || [[ -z "${{ github.event.inputs.agent_id }}" ]]; then
+            echo "agents=$(ls .claude/agents/specs/*.yaml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          else
+            echo "agents=[\"${{ github.event.inputs.agent_id }}\"]" >> $GITHUB_OUTPUT
+          fi
+          
+      - id: cache
+        run: echo "key=claude-${{ hashFiles('.claude/**/*.yaml') }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  agent-execution:
+    needs: initialize
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agent: ${{ fromJson(needs.initialize.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Execute Claude Agent
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          agent_file=$(basename "${{ matrix.agent }}")
+          agent_id="${agent_file%%-*}"
+          
+          claude agent execute "$agent_id" \
+            --context=.claude/contexts/ci.yaml \
+            --output=.claude/logs/"$agent_id"-${{ github.run_id }}.json \
+            --metrics=.claude/logs/"$agent_id"-metrics.json
+            
+      - name: Upload Agent Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-${{ matrix.agent }}-results
+          path: .claude/logs/
+          retention-days: 30

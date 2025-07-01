@@ -1,0 +1,71 @@
+apiVersion: claude.anthropic.com/v1beta1
+kind: AgentSpecification
+metadata:
+  name: quality-review-agent
+  id: QRA-001
+  version: 2.0.0
+  signature: |
+    -----BEGIN PGP SIGNATURE-----
+    # Agent specification cryptographic signature
+    -----END PGP SIGNATURE-----
+spec:
+  runtime:
+    image: ghcr.io/anthropics/claude-agent:qra-v2.0.0
+    command: ["/usr/bin/claude-agent"]
+    args: ["--mode=quality", "--config=/etc/claude/qra.yaml"]
+    
+  capabilities:
+    permissions:
+      - READ_SOURCE_CODE
+      - ANALYZE_AST
+      - GENERATE_TESTS
+      - EXECUTE_STATIC_ANALYSIS
+      - PROFILE_PERFORMANCE
+    restrictions:
+      - NO_PRODUCTION_WRITE
+      - NO_SECRET_ACCESS
+      - NO_NETWORK_EGRESS
+      
+  triggers:
+    git_events:
+      - type: pull_request
+        actions: [opened, synchronize, ready_for_review]
+        filters:
+          paths:
+            include: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+            exclude: ["**/node_modules/**", "**/dist/**"]
+      - type: pre_push
+        branches: ["develop", "feature/*", "fix/*"]
+        
+  quality_gates:
+    thresholds:
+      test_coverage:
+        lines: 85
+        branches: 80
+        functions: 85
+        statements: 85
+      complexity:
+        cyclomatic: 10
+        cognitive: 15
+        halstead_difficulty: 20
+      duplication:
+        threshold: 3
+        min_tokens: 50
+      security:
+        severity_threshold: MEDIUM
+        owasp_top_10: BLOCK
+        
+  reporting:
+    formats:
+      - type: github_check_run
+        config:
+          name: "Claude QRA Analysis"
+          summary_template: |
+            ## Quality Metrics
+            - Coverage: {{ .Coverage.Lines }}%
+            - Complexity: {{ .Complexity.Average }}
+            - Security Issues: {{ .Security.Count }}
+      - type: prometheus_metrics
+        config:
+          job_name: claude_qra
+          instance: ${HOSTNAME}

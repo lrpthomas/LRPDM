@@ -1,0 +1,51 @@
+apiVersion: claude.anthropic.com/v1
+kind: Workspace
+metadata:
+  name: lrpdm-gis-platform
+  uid: $(uuidgen)
+  created: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+spec:
+  version: "3.0.0"
+  engine:
+    runtime: wsl2-ubuntu-22.04
+    isolation: process
+    resources:
+      cpu_shares: 2048
+      memory_limit: 8589934592  # 8GB in bytes
+      
+  git_integration:
+    provider: github
+    auto_sync: true
+    branch_protection:
+      enabled: true
+      patterns: ["main", "production", "release/*"]
+      enforcement:
+        require_pr_reviews: 2
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        required_status_checks:
+          - "claude/quality-gate"
+          - "claude/security-scan"
+          - "test/coverage"
+          
+  execution_policy:
+    parallelism: 4
+    timeout_seconds: 300
+    retry:
+      max_attempts: 3
+      backoff_strategy: exponential
+      initial_interval_ms: 1000
+      
+  observability:
+    traces:
+      enabled: true
+      sampling_rate: 0.1
+      exporter: otlp
+    metrics:
+      enabled: true
+      port: 9090
+      path: /metrics
+    logs:
+      level: INFO
+      format: json
+      output: stdout
