@@ -1,0 +1,263 @@
+name: Claude Automatic Issue Discovery
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to perform'
+        required: false
+        type: choice
+        options:
+          - all
+          - typescript-errors
+          - security
+          - test-coverage
+          - performance
+        default: all
+
+jobs:
+  typescript-scan:
+    if: github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'typescript-errors' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run TypeScript check and capture errors
+        id: tsc
+        run: |
+          pnpm build 2>&1 | tee tsc-output.log || true
+          echo "error_count=$(grep -c "error TS" tsc-output.log || echo 0)" >> $GITHUB_OUTPUT
+          
+      - name: Create TypeScript error issue if needed
+        if: steps.tsc.outputs.error_count != '0'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const tscOutput = fs.readFileSync('tsc-output.log', 'utf8');
+            const errorCount = ${{ steps.tsc.outputs.error_count }};
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent,typescript-errors',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CLAUDE-TASK] Fix ${errorCount} TypeScript compilation errors`,
+                labels: ['claude-agent', 'automation', 'typescript-errors'],
+                body: `Target Agent: DEV-002 (Development)
+                
+Task Specification:
+Fix all TypeScript compilation errors in the project. The build is currently failing with ${errorCount} type errors.
+
+\`\`\`
+${tscOutput.slice(0, 5000)}${tscOutput.length > 5000 ? '\n... (truncated)' : ''}
+\`\`\`
+
+Execution Constraints:
+- Requires 85% test coverage
+- Security scan required
+- Performance benchmarks needed`
+              });
+            }
+
+  security-scan:
+    if: github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'security' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run security audit
+        id: audit
+        run: |
+          npm audit --json > audit-results.json || true
+          echo "vuln_count=$(jq '.metadata.vulnerabilities.total' audit-results.json)" >> $GITHUB_OUTPUT
+          echo "critical_count=$(jq '.metadata.vulnerabilities.critical' audit-results.json)" >> $GITHUB_OUTPUT
+          
+      - name: Create security issue if vulnerabilities found
+        if: steps.audit.outputs.vuln_count != '0'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const auditResults = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
+            const vulnCount = ${{ steps.audit.outputs.vuln_count }};
+            const criticalCount = ${{ steps.audit.outputs.critical_count }};
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent,security',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0 && criticalCount > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CLAUDE-TASK] Fix ${criticalCount} critical security vulnerabilities`,
+                labels: ['claude-agent', 'automation', 'security', 'high-priority'],
+                body: `Target Agent: OPS-003 (Operations)
+                
+Task Specification:
+Fix security vulnerabilities detected in dependencies. Found ${vulnCount} total vulnerabilities, including ${criticalCount} critical issues.
+
+Vulnerability Summary:
+- Critical: ${auditResults.metadata.vulnerabilities.critical}
+- High: ${auditResults.metadata.vulnerabilities.high}
+- Moderate: ${auditResults.metadata.vulnerabilities.moderate}
+- Low: ${auditResults.metadata.vulnerabilities.low}
+
+Execution Constraints:
+- Requires 85% test coverage
+- Security scan required
+- Performance benchmarks needed`
+              });
+            }
+
+  test-coverage-scan:
+    if: github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'test-coverage' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run test coverage
+        id: coverage
+        run: |
+          pnpm test:coverage --json --outputFile=coverage-summary.json || true
+          echo "line_coverage=$(jq '.total.lines.pct' coverage/coverage-summary.json || echo 0)" >> $GITHUB_OUTPUT
+          
+      - name: Create coverage issue if below threshold
+        if: steps.coverage.outputs.line_coverage < 85
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const coverage = ${{ steps.coverage.outputs.line_coverage }};
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent,test-coverage',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CLAUDE-TASK] Increase test coverage from ${coverage}% to 85%`,
+                labels: ['claude-agent', 'automation', 'test-coverage'],
+                body: `Target Agent: DEV-002 (Development)
+                
+Task Specification:
+Increase test coverage to meet the 85% threshold. Current coverage is ${coverage}%.
+
+Areas needing coverage:
+- Review coverage report to identify untested code
+- Write unit tests for uncovered functions
+- Add integration tests for critical paths
+- Ensure edge cases are tested
+
+Execution Constraints:
+- Requires 85% test coverage
+- Security scan required
+- Performance benchmarks needed`
+              });
+            }
+
+  performance-scan:
+    if: github.event.inputs.scan_type == 'all' || github.event.inputs.scan_type == 'performance' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Analyze bundle size
+        id: bundle
+        run: |
+          # Simple check for large files
+          find . -type f -name "*.js" -size +1M -exec ls -lh {} \; > large-files.txt || true
+          echo "large_file_count=$(wc -l < large-files.txt)" >> $GITHUB_OUTPUT
+          
+      - name: Create performance issue if needed
+        if: steps.bundle.outputs.large_file_count != '0'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const largeFiles = fs.readFileSync('large-files.txt', 'utf8');
+            const fileCount = ${{ steps.bundle.outputs.large_file_count }};
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-agent,performance',
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0 && fileCount > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CLAUDE-TASK] Optimize ${fileCount} large JavaScript files`,
+                labels: ['claude-agent', 'automation', 'performance'],
+                body: `Target Agent: DEV-002 (Development)
+                
+Task Specification:
+Optimize large JavaScript files that may impact application performance.
+
+Large files detected:
+\`\`\`
+${largeFiles}
+\`\`\`
+
+Optimization tasks:
+- Implement code splitting
+- Remove unused dependencies
+- Minify and compress assets
+- Consider lazy loading
+
+Execution Constraints:
+- Requires 85% test coverage
+- Security scan required
+- Performance benchmarks needed`
+              });
+            }
