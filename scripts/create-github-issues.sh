@@ -33,7 +33,8 @@ create_issue() {
         gh issue create \
             --title "$title" \
             --body-file "$body_file" \
-            --label "$labels"
+            --label "$labels" \
+        || echo "❌ Failed to create issue: $title"
         echo "✅ Issue created successfully"
     else
         echo "❌ Body file not found: $body_file"
