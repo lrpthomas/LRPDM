@@ -2,21 +2,38 @@
 
 AGENT_CMD="$1"
 AGENT_TYPE="$2"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 case "$AGENT_CMD" in
     start)
-        echo "🚀 Starting Enterprise Multi-Agent Orchestration Framework..."
-        echo "  • Loading agent configurations..."
-        echo "  • Initializing 5 specialized agents:"
-        echo "    - Frontend UI Agent (React/MapLibre optimization)"
-        echo "    - Backend API Agent (Spatial API management)"
-        echo "    - PostGIS Optimization Agent (Database performance)"
-        echo "    - Infrastructure Agent (DevOps automation)"
-        echo "    - Quality Assurance Agent (Testing & validation)"
-        echo ""
-        echo "✅ Agent framework is now active and monitoring your GIS platform!"
-        echo "📊 Dashboard: http://localhost:3002"
-        echo "🔍 API Status: http://localhost:3001/api/status"
+        if [ "$AGENT_TYPE" = "quality_agent" ] || [ "$AGENT_TYPE" = "qra" ]; then
+            echo "🚀 Starting QRA-001 Quality Review Agent..."
+            echo "  • Initializing comprehensive quality review process"
+            echo "  • Target: 85% test coverage, security scan, performance benchmarks"
+            echo "  • Following QRA-INSTRUCTIONS.md guidelines"
+            echo ""
+            
+            # Run the actual QRA agent
+            cd "$PROJECT_ROOT"
+            node scripts/qra-agent.js
+            exit $?
+        else
+            echo "🚀 Starting Enterprise Multi-Agent Orchestration Framework..."
+            echo "  • Loading agent configurations..."
+            echo "  • Initializing 5 specialized agents:"
+            echo "    - Frontend UI Agent (React/MapLibre optimization)"
+            echo "    - Backend API Agent (Spatial API management)"
+            echo "    - PostGIS Optimization Agent (Database performance)"
+            echo "    - Infrastructure Agent (DevOps automation)"
+            echo "    - Quality Assurance Agent (Testing & validation)"
+            echo ""
+            echo "✅ Agent framework is now active and monitoring your GIS platform!"
+            echo "📊 Dashboard: http://localhost:3002"
+            echo "🔍 API Status: http://localhost:3001/api/status"
+            echo ""
+            echo "To start the QRA agent specifically, run:"
+            echo "  $0 start quality_agent"
+        fi
         ;;
     stop)
         echo "⏹️ Stopping agent framework..."
@@ -84,7 +101,8 @@ case "$AGENT_CMD" in
         echo "  backend_api_agent      - Spatial API management"
         echo "  postgis_agent          - Database optimization"
         echo "  infrastructure_agent   - DevOps automation"
-        echo "  quality_agent          - Testing & validation"
+        echo "  quality_agent          - Testing & validation (QRA-001)"
+        echo "  qra                    - Alias for quality_agent"
         exit 1
         ;;
 esac

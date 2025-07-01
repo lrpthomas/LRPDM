@@ -1,0 +1,32 @@
+LRPDM Performance Benchmark Report
+Generated: Tue Jul  1 18:16:35 UTC 2025
+=================================
+
+Total Failures: 3
+Status: FAILED
+
+Benchmark Results:
+Build Time: FAILED (target: <60) - FAIL
+Unit Test Time: TIMEOUT/FAILED (target: <30) - FAIL
+Memory Usage: <512MB (target: <512MB) - PASS
+File Write (1MB): 30ms (target: <100ms) - PASS
+File Read (1MB): 2ms (target: <100ms) - PASS
+npm ci Time: 13s (target: <180s) - PASS
+TypeScript Check: TIMEOUT/FAILED (target: <30) - FAIL
+
+Performance Targets (LRPDM Requirements):
+- Build Time: < 60 seconds
+- Unit Test Time: < 30 seconds  
+- Memory Usage: < 512MB
+- File Operations: < 100ms for 1MB
+- npm ci Time: < 180 seconds
+- TypeScript Check: < 30 seconds
+
+Recommendations:
+- Optimize build process and bundle size
+- Improve test efficiency and parallelization
+- Monitor memory usage and fix memory leaks
+- Use SSD storage for better I/O performance
+- Cache dependencies and type checking results
+- Regular performance regression testing
+
