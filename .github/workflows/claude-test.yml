@@ -1,0 +1,59 @@
+name: Test Claude Setup
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/claude-test.yml'
+
+jobs:
+  test-api-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Claude API Key
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          if [ -z "$CLAUDE_API_KEY" ]; then
+            echo "❌ CLAUDE_API_KEY is not set in GitHub secrets!"
+            exit 1
+          else
+            echo "✅ CLAUDE_API_KEY is configured"
+            echo "Key length: ${#CLAUDE_API_KEY}"
+          fi
+          
+      - name: Test GitHub Token
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "❌ GITHUB_TOKEN is not available!"
+            exit 1
+          else
+            echo "✅ GITHUB_TOKEN is available"
+          fi
+          
+      - name: Create Test Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[CLAUDE-TASK] Test Agent System',
+              labels: ['claude-agent', 'test'],
+              body: `Target Agent: QRA-001 (Quality Review)
+              
+Task Specification:
+This is a test issue to verify the Claude agent system is working.
+
+Please analyze the current repository setup and confirm:
+1. All workflows are properly configured
+2. API keys are accessible
+3. Agent system is operational
+
+This is an automated test.`
+            });
+            
+            console.log(`Created test issue #${issue.data.number}`);
+            console.log(`URL: ${issue.data.html_url}`);

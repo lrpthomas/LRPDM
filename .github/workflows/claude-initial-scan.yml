@@ -2,6 +2,8 @@ name: Claude Initial Project Scan
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/claude-initial-scan.yml'
   workflow_dispatch:
 
 jobs:
