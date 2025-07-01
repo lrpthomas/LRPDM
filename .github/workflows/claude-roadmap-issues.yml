@@ -1,0 +1,231 @@
+name: Claude Roadmap Issue Generator
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'orchestration/docs/implementation-roadmap.md'
+      - '.github/workflows/claude-roadmap-issues.yml'
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Phase to create issues for'
+        required: false
+        type: choice
+        options:
+          - all
+          - phase-1
+          - phase-2
+          - phase-3
+          - phase-4
+        default: all
+
+jobs:
+  create-roadmap-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Parse roadmap and create issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const roadmapContent = fs.readFileSync('orchestration/docs/implementation-roadmap.md', 'utf8');
+            
+            // Define phase configurations
+            const phaseConfig = {
+              'phase-1': {
+                title: 'Foundation',
+                weeks: '1-4',
+                agent: 'OPS-003',
+                priority: 'high',
+                pattern: /### Phase 1: Foundation[\s\S]*?(?=### Phase 2:|$)/
+              },
+              'phase-2': {
+                title: 'Supervised Autonomy',
+                weeks: '5-10',
+                agent: 'DEV-002',
+                priority: 'high',
+                pattern: /### Phase 2: Supervised Autonomy[\s\S]*?(?=### Phase 3:|$)/
+              },
+              'phase-3': {
+                title: 'Managed Autonomy',
+                weeks: '11-18',
+                agent: 'DEV-002',
+                priority: 'medium',
+                pattern: /### Phase 3: Managed Autonomy[\s\S]*?(?=### Phase 4:|$)/
+              },
+              'phase-4': {
+                title: 'Full Autonomy',
+                weeks: '19-24',
+                agent: 'OPS-003',
+                priority: 'medium',
+                pattern: /### Phase 4: Full Autonomy[\s\S]*?$/
+              }
+            };
+            
+            // Extract tasks from roadmap
+            function extractTasks(content, phase) {
+              const tasks = [];
+              const phaseMatch = content.match(phaseConfig[phase].pattern);
+              if (!phaseMatch) return tasks;
+              
+              const phaseContent = phaseMatch[0];
+              const lines = phaseContent.split('\n');
+              
+              let currentWeek = '';
+              for (const line of lines) {
+                // Capture week headers
+                if (line.match(/#### Week \d+-?\d*:/)) {
+                  currentWeek = line.replace('####', '').trim();
+                }
+                
+                // Capture tasks (checkbox items)
+                const taskMatch = line.match(/^- \[ \] (.+)$/);
+                if (taskMatch) {
+                  tasks.push({
+                    task: taskMatch[1],
+                    week: currentWeek,
+                    phase: phase
+                  });
+                }
+              }
+              
+              return tasks;
+            }
+            
+            // Check which phases to process
+            const phasesToProcess = context.payload.inputs?.phase === 'all' || !context.payload.inputs?.phase
+              ? ['phase-1', 'phase-2', 'phase-3', 'phase-4']
+              : [context.payload.inputs.phase];
+            
+            // Get existing Claude roadmap issues to avoid duplicates
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-roadmap',
+              state: 'all',
+              per_page: 100
+            });
+            
+            const existingTitles = new Set(existingIssues.data.map(issue => issue.title));
+            
+            // Process each phase
+            for (const phase of phasesToProcess) {
+              const tasks = extractTasks(roadmapContent, phase);
+              const config = phaseConfig[phase];
+              
+              console.log(`Processing ${phase}: found ${tasks.length} tasks`);
+              
+              // Create milestone for the phase if it doesn't exist
+              const milestones = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open'
+              });
+              
+              let milestone = milestones.data.find(m => m.title === `Claude ${config.title} (Weeks ${config.weeks})`);
+              
+              if (!milestone) {
+                milestone = await github.rest.issues.createMilestone({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `Claude ${config.title} (Weeks ${config.weeks})`,
+                  description: `Implementation of ${config.title} phase for Claude orchestration framework`
+                });
+                milestone = milestone.data;
+              }
+              
+              // Create issues for each task
+              for (const taskInfo of tasks) {
+                const issueTitle = `[CLAUDE-TASK] ${taskInfo.task}`;
+                
+                // Skip if issue already exists
+                if (existingTitles.has(issueTitle)) {
+                  console.log(`Skipping existing issue: ${issueTitle}`);
+                  continue;
+                }
+                
+                const issueBody = `Target Agent: ${config.agent} (${config.agent === 'OPS-003' ? 'Operations' : 'Development'})
+
+Task Specification:
+${taskInfo.task}
+
+Implementation Phase: ${config.title}
+Timeline: ${taskInfo.week}
+Roadmap Reference: Weeks ${config.weeks}
+
+This task is part of the Claude orchestration framework implementation roadmap.
+
+Execution Constraints:
+- Requires 85% test coverage
+- Security scan required
+- Performance benchmarks needed
+
+Success Criteria:
+- Task completed according to roadmap specifications
+- All quality gates passed
+- Documentation updated
+- No regression in existing functionality`;
+                
+                try {
+                  const issue = await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: issueTitle,
+                    body: issueBody,
+                    labels: ['claude-agent', 'claude-roadmap', `${phase}`, config.priority],
+                    milestone: milestone.number
+                  });
+                  
+                  console.log(`Created issue: ${issueTitle}`);
+                  
+                  // Add a small delay to avoid rate limiting
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch (error) {
+                  console.error(`Failed to create issue: ${issueTitle}`, error);
+                }
+              }
+            }
+            
+            // Create summary issue if this is the first run
+            const summaryTitle = '[CLAUDE-TASK] Implementation Roadmap Overview and Tracking';
+            if (!existingTitles.has(summaryTitle)) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: summaryTitle,
+                body: `Target Agent: QRA-001 (Quality Review)
+
+Task Specification:
+Monitor and track the implementation progress of the Claude orchestration framework across all phases.
+
+## Implementation Phases
+
+### Phase 1: Foundation (Weeks 1-4)
+Establish core infrastructure and baseline capabilities
+
+### Phase 2: Supervised Autonomy (Weeks 5-10)
+Enable autonomous actions for low-risk tasks
+
+### Phase 3: Managed Autonomy (Weeks 11-18)
+Expand autonomous capabilities to medium-risk tasks
+
+### Phase 4: Full Autonomy (Weeks 19-24)
+Achieve full autonomy within defined boundaries
+
+## Tracking
+- All roadmap tasks have been created as individual GitHub issues
+- Each phase has its own milestone
+- Progress can be tracked through the Projects board
+- Agents will automatically work on tasks labeled with 'claude-agent'
+
+Execution Constraints:
+- Monitor overall progress
+- Ensure phase dependencies are respected
+- Track success metrics for each phase
+- Generate weekly progress reports`,
+                labels: ['claude-agent', 'claude-roadmap', 'tracking', 'high-priority'],
+                pinned: true
+              });
+            }
