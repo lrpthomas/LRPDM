@@ -132,3 +132,11 @@ export function getFileTypeInfo(fileType: SupportedFileType): FileTypeInfo {
 export function getAllSupportedTypes(): SupportedFileType[] {
   return Object.values(SupportedFileType);
 }
+
+export function validateSupportedFileType(fileType: string): SupportedFileType {
+  const supportedType = Object.values(SupportedFileType).find(type => type === fileType);
+  if (!supportedType) {
+    throw new Error(`Unsupported file type: ${fileType}`);
+  }
+  return supportedType;
+}

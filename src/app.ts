@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
 import uploadRoutes from './routes/upload';
 import dataImportRoutes from './routes/dataImport';
@@ -8,7 +8,7 @@ import taskRoutes from './routes/tasks-simple';
 import notificationRoutes from './routes/notifications-simple';
 import spatialAdvancedRoutes from './routes/spatial-advanced';
 
-const app = express();
+const app: Application = express();
 
 // CORS configuration
 app.use(cors({

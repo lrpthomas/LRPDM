@@ -17,8 +17,14 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:unit": "jest tests/unit --coverage",
     "test:spatial:validation": "PGPASSWORD=$POSTGRES_PASSWORD jest tests/spatial-validation.test.ts --forceExit",
-    "test:spatial:performance": "PGPASSWORD=$POSTGRES_PASSWORD jest tests/spatial-performance.test.ts --forceExit"
+    "test:spatial:performance": "PGPASSWORD=$POSTGRES_PASSWORD jest tests/spatial-performance.test.ts --forceExit",
+    "test:performance": "ts-node src/scripts/spatial-performance-audit.ts",
+    "security:audit": "pnpm audit --audit-level moderate",
+    "security:scan": "echo 'Security scan placeholder - integrate with Snyk/CodeQL'",
+    "lint": "echo 'Linting placeholder - add ESLint configuration'",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

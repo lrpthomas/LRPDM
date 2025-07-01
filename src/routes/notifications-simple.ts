@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db as knex } from '../config/database';
 
-const router = Router();
+const router: Router = Router();
 
 // Get notifications for a user
 router.get('/user/:userId', async (req: Request, res: Response) => {

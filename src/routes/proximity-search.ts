@@ -3,7 +3,7 @@ import { db as knex } from '../config/database';
 import { z } from 'zod';
 import { ProximitySearchResult, FeatureProperties } from '../types/spatial';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const proximitySearchSchema = z.object({

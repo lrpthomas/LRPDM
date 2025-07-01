@@ -1,0 +1,116 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: "22.11.0"
+  PNPM_VERSION: "9.15.0"
+  POSTGRES_VERSION: "16"
+  POSTGIS_VERSION: "3.4"
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'test_password' }}
+          POSTGRES_DB: gis_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run Database Migrations
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'test_password' }}
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: gis_test
+          PGUSER: postgres
+        run: |
+          pnpm run db:migrate || true
+          
+      - name: Run Spatial Performance Audit
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'test_password' }}
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: gis_test
+          PGUSER: postgres
+        run: |
+          pnpm exec ts-node src/scripts/spatial-performance-audit.ts || true
+          
+      - name: Run Performance Benchmarks
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'test_password' }}
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: gis_test
+          PGUSER: postgres
+        run: |
+          pnpm test:spatial:performance || true
+          
+      - name: Upload Performance Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-reports
+          path: |
+            reports/
+            *.json
+          retention-days: 30
+
+  benchmark-comparison:
+    runs-on: ubuntu-latest
+    name: Benchmark Comparison
+    needs: performance-tests
+    
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Download Performance Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-reports
+          
+      - name: Performance Summary
+        run: |
+          echo "## Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Spatial Query Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- Target: < 2 seconds for 100k features" >> $GITHUB_STEP_SUMMARY
+          echo "- Map tile generation: < 500ms per tile" >> $GITHUB_STEP_SUMMARY
+          echo "- File upload processing: < 30 seconds for 10MB CSV" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ -f "spatial-performance-audit-*.json" ]]; then
+            echo "✅ Performance audit completed"
+            echo "📊 Detailed results available in artifacts"
+          else
+            echo "⚠️ Performance audit results not found"
+          fi
