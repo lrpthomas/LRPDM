@@ -1,0 +1,23 @@
+apiVersion: claude/v3
+kind: Agent
+metadata:
+  name: dev-002
+  type: development
+  priority: HIGH
+spec:
+  trigger:
+    - event: issue.labeled
+      label: "type:development"
+    - event: issue.assigned
+      assignee: "@claude-dev"
+  capabilities:
+    - code_generation
+    - test_creation
+    - documentation
+  constraints:
+    coverage_threshold: 85
+    max_execution_time: 30m
+  outputs:
+    - pull_request
+    - test_report
+    - coverage_metrics

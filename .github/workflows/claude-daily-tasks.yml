@@ -1,0 +1,185 @@
+name: Claude Daily Development Tasks
+on:
+  schedule:
+    # Run daily at 9 AM UTC (4 AM EST / 1 AM PST)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  create-daily-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create daily development task issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const dailyTasks = JSON.parse(fs.readFileSync('.claude-code/tasks/daily-dev.json', 'utf8'));
+            
+            // Map task names to appropriate agents
+            const taskAgentMap = {
+              'code-review': 'QRA-001',
+              'performance-audit': 'DEV-002',
+              'test-generation': 'DEV-002',
+              'documentation-update': 'DEV-002'
+            };
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Check if daily tasks already created today
+            const existingToday = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-daily-task',
+              since: new Date().toISOString().split('T')[0] + 'T00:00:00Z'
+            });
+            
+            if (existingToday.data.length > 0) {
+              console.log('Daily tasks already created for today');
+              return;
+            }
+            
+            // Create daily task batch issue
+            const batchIssue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[CLAUDE-TASK] Daily Development Tasks - ${today}`,
+              labels: ['claude-agent', 'claude-daily-task', 'automation'],
+              body: `Target Agent: QRA-001 (Quality Review)
+              
+Task Specification:
+Coordinate and execute daily development tasks for ${today}.
+
+## Tasks to Execute:
+
+${dailyTasks.tasks.map(task => `### ${task.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+- Focus: ${task.focus ? task.focus.join(', ') : task.criteria ? task.criteria.join(', ') : 'Standard review'}
+- Scope: ${task.files ? task.files.join(', ') : task.database || 'Full project'}
+${task.coverage_threshold ? `- Coverage Target: ${task.coverage_threshold}%` : ''}
+`).join('\n')}
+
+## Execution Plan:
+1. Each task will be executed by the appropriate agent
+2. Results will be consolidated into a daily report
+3. Any issues found will generate follow-up tasks
+4. Performance metrics will be tracked
+
+Execution Constraints:
+- Complete all tasks within 4 hours
+- Generate comprehensive report
+- Create issues for any problems found`
+            });
+            
+            console.log(`Created daily task batch: ${batchIssue.data.html_url}`);
+            
+            // Create individual task issues for specific actions
+            for (const task of dailyTasks.tasks) {
+              const agent = taskAgentMap[task.name] || 'QRA-001';
+              const taskTitle = task.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              
+              let taskBody = `Target Agent: ${agent} (${agent === 'QRA-001' ? 'Quality Review' : 'Development'})
+
+Task Specification:
+Execute daily ${taskTitle.toLowerCase()} for ${today}.
+
+`;
+
+              // Add task-specific details
+              switch (task.name) {
+                case 'code-review':
+                  taskBody += `## Review Scope:
+${task.files.map(f => `- ${f}`).join('\n')}
+
+## Review Criteria:
+${task.criteria.map(c => `- ${c}`).join('\n')}
+
+## Expected Output:
+- Code quality report
+- List of issues found
+- Suggested improvements
+- Performance optimization opportunities`;
+                  break;
+                  
+                case 'performance-audit':
+                  taskBody += `## Audit Database: ${task.database}
+
+## Focus Areas:
+${task.focus.map(f => `- ${f}`).join('\n')}
+
+## Expected Output:
+- Query performance report
+- Slow query identification
+- Index recommendations
+- Optimization suggestions`;
+                  break;
+                  
+                case 'test-generation':
+                  taskBody += `## Coverage Target: ${task.coverage_threshold}%
+
+## Test Types:
+${task.test_types.map(t => `- ${t}`).join('\n')}
+
+## Expected Output:
+- New test files created
+- Coverage report
+- Test execution results
+- Areas still needing coverage`;
+                  break;
+                  
+                case 'documentation-update':
+                  taskBody += `## Documentation Formats:
+${task.formats.map(f => `- ${f}`).join('\n')}
+
+## Expected Output:
+- Updated API documentation
+- Changelog entries
+- README updates
+- API collection exports`;
+                  break;
+              }
+              
+              taskBody += `
+
+Execution Constraints:
+- Complete within 1 hour
+- Maintain code quality standards
+- Follow project conventions
+- Update tracking issue with results
+
+Parent Issue: #${batchIssue.data.number}`;
+
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CLAUDE-TASK] Daily ${taskTitle} - ${today}`,
+                labels: ['claude-agent', 'claude-daily-task', task.name],
+                body: taskBody
+              });
+              
+              console.log(`Created daily task: ${issue.data.title}`);
+              
+              // Small delay to avoid rate limiting
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Comment on batch issue with links to individual tasks
+            const taskIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'claude-daily-task',
+              since: today + 'T00:00:00Z'
+            });
+            
+            const taskLinks = taskIssues.data
+              .filter(issue => issue.number !== batchIssue.data.number)
+              .map(issue => `- [ ] ${issue.title} (#${issue.number})`)
+              .join('\n');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: batchIssue.data.number,
+              body: `## Daily Task Checklist\n\n${taskLinks}\n\nTasks will be executed automatically by Claude agents.`
+            });
