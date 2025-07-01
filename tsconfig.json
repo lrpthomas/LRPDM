@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "allowJs": true,
+    "allowJs": false,
     "noEmit": true,
     "incremental": true,
     "composite": true,
@@ -28,6 +28,7 @@
       "@lrpdm/shared/*": ["./packages/shared/src/*"]
     }
   },
+  "files": ["src/index.ts"],
   "references": [
     { "path": "./packages/shared" },
     { "path": "./packages/api" },
@@ -41,6 +42,11 @@
     "**/dist",
     "**/build",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "**/*.js",
+    "jest.config.js",
+    "webpack.config.js",
+    "verify-setup.js",
+    "packages/**/*"
   ]
 }

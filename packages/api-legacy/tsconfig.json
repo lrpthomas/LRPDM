@@ -1,5 +1,7 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -28,16 +30,32 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "include": [
-    "./**/*.ts",
-    "./**/*.tsx"
+    "app.ts",
+    "index.ts",
+    "server.ts",
+    "config/**/*.ts",
+    "controllers/**/*.ts",
+    "database/**/*.ts",
+    "middleware/**/*.ts",
+    "models/**/*.ts",
+    "repositories/**/*.ts",
+    "routes/**/*.ts",
+    "scripts/**/*.ts",
+    "services/**/*.ts",
+    "types/**/*.ts",
+    "utils/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts"
+  ],
+  "references": [
+    { "path": "../shared" }
   ]
 }

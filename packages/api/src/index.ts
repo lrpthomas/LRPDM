@@ -38,7 +38,7 @@ fastify.get('/health', async (request, reply) => {
     return {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 });

@@ -4,13 +4,15 @@
     "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"],
+    "jsx": "react-native",
+    "lib": ["ES2020"],
+    "types": ["react-native"],
     "declaration": true,
     "declarationMap": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"],
+  "include": ["src/**/*", "src/**/*.tsx", "src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
   "references": [
     { "path": "../shared" }
   ]
