@@ -1,0 +1,9 @@
+{
+  "watch": ["."],
+  "ext": "ts,json",
+  "ignore": ["dist/**/*", "node_modules/**/*", "coverage/**/*"],
+  "exec": "ts-node",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
