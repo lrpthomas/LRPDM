@@ -1,0 +1,40 @@
+name: Issue to Agent Converter
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  convert:
+    if: contains(github.event.issue.labels.*.name, 'claude-agent')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse Issue to Agent Task
+        run: |
+          AGENT=$(echo "${{ github.event.issue.body }}" | grep -oP "(?<=Target Agent: )[A-Z]{3}-\d{3}")
+          echo "AGENT_ID=$AGENT" >> $GITHUB_ENV
+      
+      - name: Create Agent Task
+        run: |
+          mkdir -p .claude/tasks
+          cat > .claude/tasks/task-${{ github.event.issue.number }}.yaml << EOF
+          apiVersion: claude/v3
+          kind: Task
+          metadata:
+            issue: ${{ github.event.issue.number }}
+            agent: ${{ env.AGENT_ID }}
+          spec:
+            requirements: |
+              ${{ github.event.issue.body }}
+            constraints:
+              issue_url: ${{ github.event.issue.html_url }}
+          EOF
+      
+      - name: Trigger Agent Execution
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          claude agent execute "${{ env.AGENT_ID }}" \
+            --task=.claude/tasks/task-${{ github.event.issue.number }}.yaml \
+            --context=.claude/contexts/issue.yaml \
+            --output=.claude/logs/${{ env.AGENT_ID }}-issue-${{ github.event.issue.number }}.json

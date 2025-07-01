@@ -1,0 +1,30 @@
+name: Claude Agent Task
+description: Create a task for Claude agent execution
+title: "[CLAUDE-TASK] "
+labels: ["claude-agent", "automation"]
+body:
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Target Agent
+      options:
+        - QRA-001 (Quality Review)
+        - DEV-002 (Development)
+        - OPS-003 (Operations)
+    validations:
+      required: true
+  - type: textarea
+    id: specification
+    attributes:
+      label: Task Specification
+      placeholder: Detailed technical requirements
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Execution Constraints
+      options:
+        - label: Requires 85% test coverage
+        - label: Security scan required
+        - label: Performance benchmarks needed

@@ -1,0 +1,21 @@
+apiVersion: claude/v3
+kind: Agent
+metadata:
+  name: ops-003
+  type: operations
+  priority: CRITICAL
+spec:
+  trigger:
+    - event: deployment.requested
+    - event: infrastructure.change
+  capabilities:
+    - infrastructure_provisioning
+    - deployment_orchestration
+    - monitoring_setup
+  constraints:
+    approval_required: true
+    rollback_enabled: true
+  outputs:
+    - deployment_manifest
+    - infrastructure_state
+    - monitoring_dashboard
