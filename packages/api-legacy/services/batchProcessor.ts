@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import GISProcessor from '../utils/gisProcessor';
 import GISExporter from '../utils/gisExporter';
@@ -120,7 +120,7 @@ class BatchProcessorService {
 
     } catch (error) {
       job.status = 'failed';
-      job.error = error.message;
+      job.error = (error as Error).message;
       job.endTime = new Date();
       console.error(`Batch job ${jobId} failed:`, error);
     } finally {
@@ -187,7 +187,7 @@ class BatchProcessorService {
         results.push({
           file: path.basename(filePath),
           success: false,
-          error: error.message
+          error: (error as Error).message
         });
 
         job.failedItems++;

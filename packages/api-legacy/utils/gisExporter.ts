@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import AdmZip from 'adm-zip';
 import { XMLBuilder } from 'fast-xml-parser';
 
@@ -108,7 +108,7 @@ export class GISExporter {
     } catch (error) {
       return {
         success: false,
-        error: `Export failed: ${error.message}`
+        error: `Export failed: ${(error as Error).message}`
       };
     }
   }
@@ -118,17 +118,17 @@ export class GISExporter {
     geojson: any, 
     outputDir: string, 
     fileName: string, 
-    options: ExportOptions
+    _options: ExportOptions
   ): Promise<{ filePath: string, fileName: string }> {
     const actualFileName = `${fileName}.geojson`;
     const filePath = path.join(outputDir, actualFileName);
     
     // Add CRS information if specified
-    if (options.crs && options.crs !== 'EPSG:4326') {
+    if (_options.crs && _options.crs !== 'EPSG:4326') {
       geojson.crs = {
         type: 'name',
         properties: {
-          name: options.crs
+          name: _options.crs
         }
       };
     }
@@ -185,7 +185,7 @@ export class GISExporter {
     geojson: any, 
     outputDir: string, 
     fileName: string, 
-    options: ExportOptions
+    _options: ExportOptions
   ): Promise<{ filePath: string, fileName: string }> {
     const csvData = this.geojsonToCSV(geojson);
     
@@ -202,7 +202,7 @@ export class GISExporter {
     geojson: any, 
     outputDir: string, 
     fileName: string, 
-    options: ExportOptions
+    _options: ExportOptions
   ): Promise<{ filePath: string, fileName: string }> {
     const gpxData = this.geojsonToGPX(geojson);
     

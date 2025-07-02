@@ -22,20 +22,20 @@ interface UploadRequest extends Request {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, `${file.fieldname}-${uniqueSuffix}.csv`);
   }
 });
 
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
     cb(null, true);
   } else {
@@ -62,14 +62,9 @@ export const uploadCSV = async (req: UploadRequest, res: Response) => {
     }
 
     const filePath = req.file.path;
-    const fieldMapping: FieldMapping[] = req.body.fieldMapping 
-      ? JSON.parse(req.body.fieldMapping) 
-      : [];
-
     // Parse CSV and extract first few rows for preview
     const csvData: CSVRow[] = [];
     const headers: string[] = [];
-    let isFirstRow = true;
 
     await new Promise<void>((resolve, reject) => {
       fs.createReadStream(filePath)

@@ -12,7 +12,7 @@ router.post('/file', upload.single('file'), uploadFile as any);
 router.post('/import', upload.single('file'), importFile as any);
 
 // Get supported file types
-router.get('/supported-types', (req, res) => {
+router.get('/supported-types', (_req, res) => {
   const supportedTypes = getAllSupportedTypes();
   res.json({
     success: true,
@@ -23,7 +23,7 @@ router.get('/supported-types', (req, res) => {
 });
 
 // Health check for data import service
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({
     status: 'OK',
     service: 'Data Import Service',

@@ -8,8 +8,8 @@
  */
 
 import { db as knex } from '../config/database';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 interface PerformanceMetric {
   metric: string;
@@ -289,7 +289,7 @@ class SpatialPerformanceAuditor {
         const result = await knex.raw(test.query);
         const duration = Date.now() - start;
 
-        const plan = result.rows.find(row => row['QUERY PLAN'])?.['QUERY PLAN'];
+        const plan = result.rows.find((row: any) => row['QUERY PLAN'])?.['QUERY PLAN'];
         const executionTime = this.extractExecutionTime(plan);
 
         this.results.queries.push({
@@ -302,7 +302,7 @@ class SpatialPerformanceAuditor {
         });
 
       } catch (error) {
-        console.warn(`Failed to analyze query ${test.name}:`, error.message);
+        console.warn(`Failed to analyze query ${test.name}:`, (error as Error).message);
       }
     }
   }
@@ -347,7 +347,7 @@ class SpatialPerformanceAuditor {
       });
 
     } catch (error) {
-      console.warn('Could not analyze geometry complexity:', error.message);
+      console.warn('Could not analyze geometry complexity:', (error as Error).message);
     }
   }
 
@@ -546,7 +546,7 @@ class SpatialPerformanceAuditor {
     return 'Monitor usage patterns';
   }
 
-  private getQueryRecommendation(queryName: string, executionTime: number, plan?: string): string {
+  private getQueryRecommendation(_queryName: string, executionTime: number, plan?: string): string {
     if (executionTime > 1000) return 'Query is slow - optimize or add indexes';
     if (executionTime > 100) return 'Consider optimization';
     if (plan && plan.includes('Seq Scan')) return 'Sequential scan detected - check indexes';

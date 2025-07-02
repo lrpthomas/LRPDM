@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db as knex } from '../config/database';
 import { z } from 'zod';
-import { ProximitySearchResult, FeatureProperties } from '../types/spatial';
 
 const router: Router = Router();
 
@@ -214,14 +213,14 @@ router.post('/proximity-search', async (req: Request, res: Response): Promise<vo
       // Include/exclude properties
       if (options.includeProperties) {
         const filtered: any = {};
-        options.includeProperties.forEach(prop => {
+        options.includeProperties.forEach((prop: string) => {
           if (properties[prop] !== undefined) {
             filtered[prop] = properties[prop];
           }
         });
         properties = filtered;
       } else if (options.excludeProperties) {
-        options.excludeProperties.forEach(prop => {
+        options.excludeProperties.forEach((prop: string) => {
           delete properties[prop];
         });
       }

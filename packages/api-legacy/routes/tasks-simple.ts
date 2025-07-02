@@ -1,11 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
 import { db as knex } from '../config/database';
 
 const router: Router = Router();
 
 // Get all tasks (simplified)
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const tasks = await knex('tasks')
       .select('*')

@@ -1,9 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { DataImportService, ImportProgress } from '../services/DataImportService';
 import { testConnection, checkPostGIS } from '../config/database';
 import { 
   UploadRequest,
-  ParsedFileResult,
   FieldMapping 
 } from './enhancedUploadController';
 import { SupportedFileType } from '../utils/fileValidation';

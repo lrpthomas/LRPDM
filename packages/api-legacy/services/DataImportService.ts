@@ -1,9 +1,7 @@
 import { db } from '../config/database';
-import { DatasetModel } from '../models/Dataset';
-import { LayerModel } from '../models/Layer';
-import { FeatureModel, CreateFeatureData } from '../models/Feature';
+import { CreateFeatureData } from '../models/Feature';
 import { PostGISService } from './PostGISService';
-import { Dataset, Layer, ImportSession } from '../database/schema';
+import { Dataset, Layer } from '../database/schema';
 import { FieldMapping } from '../controllers/enhancedUploadController';
 import { SupportedFileType } from '../utils/fileValidation';
 

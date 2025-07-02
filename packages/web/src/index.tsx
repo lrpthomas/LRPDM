@@ -24,6 +24,6 @@ if (typeof document !== 'undefined') {
 }
 
 // Hot module replacement for development
-if (module.hot) {
-  module.hot.accept();
+if (import.meta.hot) {
+  import.meta.hot.accept();
 }

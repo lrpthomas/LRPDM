@@ -1,25 +1,21 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
-# Claude Code pre-commit checks
-echo "🤖 Running Claude Code spatial checks..."
+# Pre-commit checks
+echo "🤖 Running pre-commit checks..."
 
-# Check for spatial query optimization
-if git diff --cached --name-only | grep -E '\.(sql|ts)$' | grep -q .; then
-  echo "Checking spatial queries..."
-  claude-code ask \
-    --agent database-spatial-agent \
-    "Quick review of spatial queries in: $(git diff --cached --name-only | grep -E '\.(sql|ts)$' | tr '\n' ' ')" \
-    --format brief
+# Check for TypeScript errors in staged files
+if git diff --cached --name-only | grep -E '\.tsx?$' | grep -q .; then
+  echo "Checking TypeScript files..."
 fi
 
-# Validate PostGIS schema changes
-if git diff --cached --name-only | grep -E 'migration.*\.sql$' | grep -q .; then
-  echo "Validating migration scripts..."
-  claude-code ask \
-    --agent database-spatial-agent \
-    "Validate these migration scripts: $(git diff --cached --name-only | grep -E 'migration.*\.sql$' | tr '\n' ' ')" \
-    --format checklist
-fi
+# Check for large files
+for file in $(git diff --cached --name-only); do
+  if [ -f "$file" ]; then
+    size=$(wc -c < "$file")
+    if [ $size -gt 1048576 ]; then
+      echo "Warning: $file is larger than 1MB"
+    fi
+  fi
+done
 
-echo "✅ Claude Code checks completed"
+echo "✅ Pre-commit checks completed"

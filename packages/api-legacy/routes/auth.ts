@@ -223,7 +223,7 @@ router.get('/profile', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Profile error:', error);
     
-    if (error.name === 'JsonWebTokenError') {
+    if ((error as any).name === 'JsonWebTokenError') {
       res.status(401).json({
         error: 'Invalid token'
       });
@@ -237,7 +237,7 @@ router.get('/profile', async (req: Request, res: Response) => {
 });
 
 // Logout endpoint (client-side token invalidation)
-router.post('/logout', (req: Request, res: Response) => {
+router.post('/logout', (_req: Request, res: Response) => {
   res.json({
     message: 'Logged out successfully',
     note: 'Token should be removed from client storage'

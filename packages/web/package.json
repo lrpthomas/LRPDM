@@ -20,16 +20,18 @@
     "maplibre-gl": "^4.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-native-web": "^0.20.0",
     "react-window": "^1.8.11",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
     "@types/node": "^22.15.34",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/react-native": "^0.72.8",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "react-native-web": "^0.20.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.11"
   }

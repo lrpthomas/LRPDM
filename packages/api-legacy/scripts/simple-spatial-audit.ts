@@ -30,7 +30,7 @@ async function runBasicAudit(): Promise<void> {
     `);
     
     console.log(`Found ${indexes.rows.length} spatial indexes:`);
-    indexes.rows.forEach(idx => {
+    indexes.rows.forEach((idx: any) => {
       const indexType = idx.indexdef.includes('gin') ? 'GIN' : 'GIST';
       console.log(`  ${indexType}: ${idx.tablename}.${idx.indexname}`);
     });
@@ -46,7 +46,7 @@ async function runBasicAudit(): Promise<void> {
       ORDER BY n_live_tup DESC;
     `);
 
-    tables.rows.forEach(table => {
+    tables.rows.forEach((table: any) => {
       console.log(`  ${table.tablename}: ${table.row_count} rows`);
     });
 
@@ -103,7 +103,7 @@ async function runBasicAudit(): Promise<void> {
     `);
 
     if (featureStats.rows.length > 0) {
-      featureStats.rows.forEach(stat => {
+      featureStats.rows.forEach((stat: any) => {
         console.log(`  ${stat.feature_type} (${stat.geom_type}): ${stat.count} features`);
       });
     } else {
@@ -119,7 +119,7 @@ async function runBasicAudit(): Promise<void> {
     `);
 
     if (constraints.rows.length > 0) {
-      constraints.rows.forEach(constraint => {
+      constraints.rows.forEach((constraint: any) => {
         console.log(`  ✅ ${constraint.conname}`);
       });
     } else {
@@ -134,7 +134,7 @@ async function runBasicAudit(): Promise<void> {
     }
     
     if (featureStats.rows.length > 0) {
-      const totalFeatures = featureStats.rows.reduce((sum, stat) => sum + parseInt(stat.count), 0);
+      const totalFeatures = featureStats.rows.reduce((sum: number, stat: any) => sum + parseInt(stat.count), 0);
       if (totalFeatures > 10000) {
         console.log('  📊 Large dataset detected - consider partitioning strategies');
       }

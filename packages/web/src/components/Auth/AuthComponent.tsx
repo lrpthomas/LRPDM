@@ -195,7 +195,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={loginForm.email}
-              onChangeText={(text) => setLoginForm(prev => ({ ...prev, email: text }))}
+              onChangeText={(text: string) => setLoginForm(prev => ({ ...prev, email: text }))}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -208,7 +208,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={loginForm.password}
-              onChangeText={(text) => setLoginForm(prev => ({ ...prev, password: text }))}
+              onChangeText={(text: string) => setLoginForm(prev => ({ ...prev, password: text }))}
               placeholder="Enter your password"
               secureTextEntry
               autoComplete="current-password"
@@ -234,7 +234,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={registerForm.full_name}
-              onChangeText={(text) => setRegisterForm(prev => ({ ...prev, full_name: text }))}
+              onChangeText={(text: string) => setRegisterForm(prev => ({ ...prev, full_name: text }))}
               placeholder="Enter your full name"
               autoComplete="name"
             />
@@ -245,7 +245,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={registerForm.username}
-              onChangeText={(text) => setRegisterForm(prev => ({ ...prev, username: text }))}
+              onChangeText={(text: string) => setRegisterForm(prev => ({ ...prev, username: text }))}
               placeholder="Choose a username"
               autoCapitalize="none"
               autoComplete="username"
@@ -257,7 +257,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={registerForm.email}
-              onChangeText={(text) => setRegisterForm(prev => ({ ...prev, email: text }))}
+              onChangeText={(text: string) => setRegisterForm(prev => ({ ...prev, email: text }))}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -270,7 +270,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ onAuthChange }) => {
             <TextInput
               style={styles.textInput}
               value={registerForm.password}
-              onChangeText={(text) => setRegisterForm(prev => ({ ...prev, password: text }))}
+              onChangeText={(text: string) => setRegisterForm(prev => ({ ...prev, password: text }))}
               placeholder="Create a password"
               secureTextEntry
               autoComplete="new-password"

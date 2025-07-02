@@ -509,6 +509,7 @@ export const DataTable: React.FC<DataTableProps> = ({
         // Virtual scrolling for large datasets (performance requirement)
         <List
           ref={listRef}
+          width="100%"
           height={height - (useCardView ? 0 : 40)}
           itemCount={processedData.length}
           itemSize={useCardView ? (isMobile ? 120 : 80) : rowHeight}
@@ -697,3 +698,10 @@ const styles = StyleSheet.create({
 });
 
 export default DataTable;
+export type { 
+  DataTableProps, 
+  ColumnDefinition, 
+  FeatureData, 
+  SortConfig, 
+  FilterConfig 
+};

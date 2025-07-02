@@ -3,12 +3,10 @@ import multer from 'multer';
 import csv from 'csv-parser';
 import fs from 'fs';
 import path from 'path';
-import { validateFile, SupportedFileType, detectFileType } from '../utils/fileValidation';
+import { validateFile, SupportedFileType } from '../utils/fileValidation';
 import { ExcelParser } from '../services/parsers/excelParser';
 import { GeoJSONParser } from '../services/parsers/geojsonParser';
 import { ShapefileParser } from '../services/parsers/shapefileParser';
-import { DataImportService } from '../services/DataImportService';
-import { testConnection, checkPostGIS } from '../config/database';
 
 export interface FieldMapping {
   sourceField: string;
@@ -52,21 +50,21 @@ export interface ParsedFileResult {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
     cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
   }
 });
 
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const validation = validateFile(file);
   
   if (validation.isValid) {

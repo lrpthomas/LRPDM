@@ -44,7 +44,7 @@ export class OptimizedPostGISService {
       FROM input_geoms
     `);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       index: row.idx,
       isValid: row.is_valid,
       reason: row.reason,
@@ -206,7 +206,7 @@ export class OptimizedPostGISService {
     const {
       buffer = 64,
       extent = 4096,
-      tolerance = 0,
+      tolerance: _tolerance = 0,
       featureTypes
     } = options;
 
@@ -305,7 +305,7 @@ export class OptimizedPostGISService {
       ORDER BY cluster_id
     `, [numberOfClusters, minClusterSize]);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       clusterId: row.cluster_id,
       center: {
         lng: row.center_lng,
@@ -365,7 +365,7 @@ export class OptimizedPostGISService {
       ORDER BY grid_id
     `, [gridSize, minLng, minLat, maxLng, maxLat]);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       gridId: row.grid_id,
       cellGeometry: row.cell_geometry,
       value: row.aggregate_value || 0,
@@ -416,7 +416,7 @@ export class OptimizedPostGISService {
       ORDER BY radius
     `, [featureId]);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       radius: row.radius,
       bufferArea: row.buffer_area,
       intersectingFeatures: row.intersecting_count,

@@ -1,5 +1,4 @@
-import * as XLSX from 'xlsx';
-import fs from 'fs';
+import XLSX from 'xlsx';
 
 export interface ExcelParseResult {
   headers: string[];

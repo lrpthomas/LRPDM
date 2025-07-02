@@ -84,7 +84,7 @@ router.post('/:notificationId/read', async (req: Request, res: Response) => {
 // Create a simple notification
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { userId, title, body, type = 'info' } = req.body;
+    const { userId, title, body, type: _type = 'info' } = req.body;
     
     // Get or create a default template
     let template = await knex('notification_templates')

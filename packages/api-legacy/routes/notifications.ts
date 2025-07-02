@@ -142,10 +142,10 @@ router.get('/', async (req: Request, res: Response) => {
     res.json({
       notifications: formattedNotifications,
       pagination: {
-        total: parseInt(countResult.count),
+        total: parseInt(String(countResult?.count || '0')),
         limit: params.limit,
         offset: params.offset,
-        hasMore: params.offset + params.limit < parseInt(countResult.count)
+        hasMore: params.offset + params.limit < parseInt(String(countResult?.count || '0'))
       }
     });
 
@@ -459,7 +459,7 @@ router.get('/unread-count/:userId', async (req: Request, res: Response) => {
       .first();
 
     res.json({
-      unreadCount: parseInt(result.count)
+      unreadCount: parseInt(String(result?.count || '0'))
     });
 
   } catch (error) {

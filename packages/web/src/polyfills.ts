@@ -15,9 +15,8 @@ if (typeof global === 'undefined') {
 
 // Performance API polyfill for older browsers
 if (!window.performance) {
-  window.performance = {
-    now: () => Date.now(),
-    ...window.performance
+  (window as any).performance = {
+    now: () => Date.now()
   };
 }
 

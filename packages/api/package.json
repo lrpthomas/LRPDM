@@ -9,12 +9,20 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@fastify/cors": "^11.0.1",
+    "@sinclair/typebox": "^0.34.37",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.0.0",
     "fastify": "^4.29.1",
+    "fastify-plugin": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
     "pg-pool": "^3.7.0",
     "pino-pretty": "^11.3.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.15.34",
     "@types/pg": "^8.15.4",
     "tsx": "^4.20.3",

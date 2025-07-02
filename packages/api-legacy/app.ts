@@ -42,7 +42,7 @@ app.use('/api/spatial', proximitySearchRoutes);
 // Advanced spatial processing endpoints
 app.use('/api/spatial-advanced', spatialAdvancedRoutes);
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 

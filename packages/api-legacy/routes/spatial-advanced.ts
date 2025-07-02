@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 import GISProcessor, { ProcessingResult } from '../utils/gisProcessor';
-import GISExporter, { ExportOptions } from '../utils/gisExporter';
+import GISExporter from '../utils/gisExporter';
 import { db as knex } from '../config/database';
 
 const router: Router = Router();
@@ -15,7 +15,7 @@ const upload = multer({
   limits: {
     fileSize: 100 * 1024 * 1024 // 100MB limit
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     const allowedExtensions = ['.shp', '.kml', '.kmz', '.gpx', '.geojson', '.json'];
     const ext = path.extname(file.originalname).toLowerCase();
     
@@ -130,7 +130,7 @@ router.post('/process-file', upload.single('file'), async (req: Request, res: Re
     
     res.status(500).json({
       error: 'File processing failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -158,7 +158,7 @@ router.post('/validate', async (req: Request, res: Response) => {
     console.error('Validation error:', error);
     res.status(500).json({
       error: 'Validation failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -241,7 +241,7 @@ router.post('/export', async (req: Request, res: Response) => {
     
     res.status(500).json({
       error: 'Export failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -302,13 +302,13 @@ router.post('/spatial-query', async (req: Request, res: Response) => {
     
     res.status(500).json({
       error: 'Spatial query failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
 
 // Get supported formats and capabilities
-router.get('/capabilities', (req: Request, res: Response) => {
+router.get('/capabilities', (_req: Request, res: Response) => {
   res.json({
     supportedImportFormats: [
       {
@@ -393,7 +393,7 @@ router.get('/batch-status/:jobId', async (req: Request, res: Response) => {
 
 // Helper functions
 
-async function importGeoJSONToDatabase(geojson: any, tableName: string): Promise<any> {
+async function importGeoJSONToDatabase(geojson: any, _tableName: string): Promise<any> {
   try {
     const features = geojson.features || [];
     const imported = [];
@@ -426,7 +426,7 @@ async function importGeoJSONToDatabase(geojson: any, tableName: string): Promise
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: (error as Error).message
     };
   }
 }
@@ -470,7 +470,7 @@ async function exportFromDatabase(tableName: string, spatialFilter?: any): Promi
     };
     
   } catch (error) {
-    throw new Error(`Database export failed: ${error.message}`);
+    throw new Error(`Database export failed: ${(error as Error).message}`);
   }
 }
 
@@ -545,7 +545,7 @@ async function executeSpatialQuery(params: any): Promise<any> {
     }
     
   } catch (error) {
-    throw new Error(`Spatial query failed: ${error.message}`);
+    throw new Error(`Spatial query failed: ${(error as Error).message}`);
   }
 }
 

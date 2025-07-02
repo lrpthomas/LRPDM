@@ -1,12 +1,10 @@
-import * as shapefile from 'shapefile';
-import * as fs from 'fs';
-import * as path from 'path';
-import { XMLParser } from 'fast-xml-parser';
-import * as togeojson from '@mapbox/togeojson';
+import shapefile from 'shapefile';
+import fs from 'fs';
+import path from 'path';
+import togeojson from '@mapbox/togeojson';
 import { DOMParser } from '@xmldom/xmldom';
 import StreamZip from 'node-stream-zip';
 import { validate } from 'geojson-validation';
-import reproject from 'reproject';
 
 export interface ProcessingResult {
   success: boolean;
@@ -84,7 +82,7 @@ export class GISProcessor {
     } catch (error) {
       return {
         success: false,
-        error: `File processing failed: ${error.message}`
+        error: `File processing failed: ${(error as Error).message}`
       };
     }
   }
@@ -161,7 +159,7 @@ export class GISProcessor {
     } catch (error) {
       return {
         success: false,
-        error: `Shapefile processing failed: ${error.message}`
+        error: `Shapefile processing failed: ${(error as Error).message}`
       };
     }
   }
@@ -222,7 +220,7 @@ export class GISProcessor {
     } catch (error) {
       return {
         success: false,
-        error: `KML processing failed: ${error.message}`
+        error: `KML processing failed: ${(error as Error).message}`
       };
     }
   }
@@ -258,7 +256,7 @@ export class GISProcessor {
     } catch (error) {
       return {
         success: false,
-        error: `GPX processing failed: ${error.message}`
+        error: `GPX processing failed: ${(error as Error).message}`
       };
     }
   }
@@ -313,7 +311,7 @@ export class GISProcessor {
     } catch (error) {
       return {
         success: false,
-        error: `GeoJSON processing failed: ${error.message}`
+        error: `GeoJSON processing failed: ${(error as Error).message}`
       };
     }
   }
@@ -389,7 +387,7 @@ export class GISProcessor {
       };
       
     } catch (error) {
-      errors.push(`Validation error: ${error.message}`);
+      errors.push(`Validation error: ${(error as Error).message}`);
       return {
         isValid: false,
         errors,

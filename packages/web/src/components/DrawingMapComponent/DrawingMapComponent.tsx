@@ -106,7 +106,7 @@ const DrawingMapComponent: React.FC<DrawingMapComponentProps> = ({
     if (!mapContainer.current) return;
 
     // Default OSM style
-    const defaultStyle = {
+    const defaultStyle: maplibregl.StyleSpecification = {
       version: 8,
       sources: {
         'osm': {
@@ -589,15 +589,8 @@ const DrawingMapComponent: React.FC<DrawingMapComponentProps> = ({
     }
   }, []);
 
-  // Expose methods via ref
-  React.useImperativeHandle(React.useRef(), () => ({
-    addFeature,
-    removeFeature,
-    getAllFeatures,
-    clearAllFeatures,
-    getMap: () => map.current,
-    getDraw: () => draw.current
-  }));
+  // Methods could be exposed via props callback if needed
+  // Currently removing unused useImperativeHandle
 
   return (
     <div style={{ position: 'relative', ...style }}>

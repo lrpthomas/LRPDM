@@ -2,7 +2,6 @@ import AdmZip from 'adm-zip';
 import shapefile from 'shapefile';
 import fs from 'fs';
 import path from 'path';
-import { promisify } from 'util';
 
 export interface ShapefileParseResult {
   headers: string[];
@@ -105,7 +104,7 @@ export class ShapefileParser {
     // Find the most complete shapefile
     let bestGroup: { shp: string; shx: string; dbf: string; prj?: string } | null = null;
     
-    for (const [baseName, group] of shapefileGroups) {
+    for (const [_baseName, group] of shapefileGroups) {
       if (group.shp && group.shx && group.dbf) {
         bestGroup = {
           shp: group.shp,
@@ -186,7 +185,10 @@ export class ShapefileParser {
       result = await source.read();
     }
 
-    await source.close();
+    // Close the source if the method exists
+    if (source.close) {
+      await source.close();
+    }
 
     if (features.length === 0) {
       throw new Error('No features found in shapefile');

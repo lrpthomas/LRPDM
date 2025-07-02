@@ -1,4 +1,3 @@
-import mime from 'mime-types';
 import path from 'path';
 
 export enum SupportedFileType {
@@ -133,10 +132,12 @@ export function getAllSupportedTypes(): SupportedFileType[] {
   return Object.values(SupportedFileType);
 }
 
-export function validateSupportedFileType(fileType: string): SupportedFileType {
-  const supportedType = Object.values(SupportedFileType).find(type => type === fileType);
-  if (!supportedType) {
-    throw new Error(`Unsupported file type: ${fileType}`);
+export function validateSupportedFileType(filename: string, mimeType: string): string {
+  const fileType = detectFileType(filename, mimeType);
+  
+  if (!fileType) {
+    throw new Error(`Unsupported file type for file: ${filename}`);
   }
-  return supportedType;
+  
+  return fileType.toLowerCase();
 }
