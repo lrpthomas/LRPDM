@@ -1,5 +1,5 @@
 {
-  "name": "@gis-platform/web",
+  "name": "@lrpdm/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -8,16 +8,30 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mapbox/mapbox-gl-draw": "^1.5.0",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tanstack/react-query": "^5.61.0",
+    "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.525.0",
+    "maplibre-gl": "^4.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "maplibre-gl": "^4.7.1",
-    "@tanstack/react-query": "^5.61.0",
-    "axios": "^1.7.9"
+    "react-window": "^1.8.11",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
+    "@types/node": "^22.15.34",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/react-native": "^0.72.8",
+    "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "react-native-web": "^0.20.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.11"
   }

@@ -43,16 +43,16 @@ jobs:
               title: '[CLAUDE-TASK] Test Agent System',
               labels: ['claude-agent', 'test'],
               body: `Target Agent: QRA-001 (Quality Review)
-              
-Task Specification:
-This is a test issue to verify the Claude agent system is working.
-
-Please analyze the current repository setup and confirm:
-1. All workflows are properly configured
-2. API keys are accessible
-3. Agent system is operational
-
-This is an automated test.`
+            
+            Task Specification:
+            This is a test issue to verify the Claude agent system is working.
+            
+            Please analyze the current repository setup and confirm:
+            1. All workflows are properly configured
+            2. API keys are accessible
+            3. Agent system is operational
+            
+            This is an automated test.`
             });
             
             console.log(`Created test issue #${issue.data.number}`);

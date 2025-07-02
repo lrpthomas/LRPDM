@@ -69,17 +69,17 @@ jobs:
                 labels: ['claude-agent', 'automation', 'typescript-errors'],
                 body: `Target Agent: DEV-002 (Development)
                 
-Task Specification:
-Fix all TypeScript compilation errors in the project. The build is currently failing with ${errorCount} type errors.
-
-\`\`\`
-${tscOutput.slice(0, 5000)}${tscOutput.length > 5000 ? '\n... (truncated)' : ''}
-\`\`\`
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Fix all TypeScript compilation errors in the project. The build is currently failing with ${errorCount} type errors.
+                
+                \`\`\`
+                ${tscOutput.slice(0, 5000)}${tscOutput.length > 5000 ? '\n... (truncated)' : ''}
+                \`\`\`
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
             }
 
@@ -122,19 +122,19 @@ Execution Constraints:
                 labels: ['claude-agent', 'automation', 'security', 'high-priority'],
                 body: `Target Agent: OPS-003 (Operations)
                 
-Task Specification:
-Fix security vulnerabilities detected in dependencies. Found ${vulnCount} total vulnerabilities, including ${criticalCount} critical issues.
-
-Vulnerability Summary:
-- Critical: ${auditResults.metadata.vulnerabilities.critical}
-- High: ${auditResults.metadata.vulnerabilities.high}
-- Moderate: ${auditResults.metadata.vulnerabilities.moderate}
-- Low: ${auditResults.metadata.vulnerabilities.low}
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Fix security vulnerabilities detected in dependencies. Found ${vulnCount} total vulnerabilities, including ${criticalCount} critical issues.
+                
+                Vulnerability Summary:
+                - Critical: ${auditResults.metadata.vulnerabilities.critical}
+                - High: ${auditResults.metadata.vulnerabilities.high}
+                - Moderate: ${auditResults.metadata.vulnerabilities.moderate}
+                - Low: ${auditResults.metadata.vulnerabilities.low}
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
             }
 
@@ -187,19 +187,19 @@ Execution Constraints:
                 labels: ['claude-agent', 'automation', 'test-coverage'],
                 body: `Target Agent: DEV-002 (Development)
                 
-Task Specification:
-Increase test coverage to meet the 85% threshold. Current coverage is ${coverage}%.
-
-Areas needing coverage:
-- Review coverage report to identify untested code
-- Write unit tests for uncovered functions
-- Add integration tests for critical paths
-- Ensure edge cases are tested
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Increase test coverage to meet the 85% threshold. Current coverage is ${coverage}%.
+                
+                Areas needing coverage:
+                - Review coverage report to identify untested code
+                - Write unit tests for uncovered functions
+                - Add integration tests for critical paths
+                - Ensure edge cases are tested
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
             }
 
@@ -241,23 +241,23 @@ Execution Constraints:
                 labels: ['claude-agent', 'automation', 'performance'],
                 body: `Target Agent: DEV-002 (Development)
                 
-Task Specification:
-Optimize large JavaScript files that may impact application performance.
-
-Large files detected:
-\`\`\`
-${largeFiles}
-\`\`\`
-
-Optimization tasks:
-- Implement code splitting
-- Remove unused dependencies
-- Minify and compress assets
-- Consider lazy loading
-
-Execution Constraints:
-- Requires 85% test coverage
-- Security scan required
-- Performance benchmarks needed`
+                Task Specification:
+                Optimize large JavaScript files that may impact application performance.
+                
+                Large files detected:
+                \`\`\`
+                ${largeFiles}
+                \`\`\`
+                
+                Optimization tasks:
+                - Implement code splitting
+                - Remove unused dependencies
+                - Minify and compress assets
+                - Consider lazy loading
+                
+                Execution Constraints:
+                - Requires 85% test coverage
+                - Security scan required
+                - Performance benchmarks needed`
               });
             }

@@ -7,6 +7,17 @@ You are working on LRPDM (Live, Reliable, Project, Data & Mapping), a comprehens
 **Project Repository**: `gis-platform`
 **Primary Developer**: One-person team requiring maximum automation
 **Target Platforms**: Web (primary), iOS/Android (native apps via React Native)
+**Monorepo Structure**: PNPM workspaces with shared dependencies
+
+## Monorepo Architecture
+
+This is a PNPM workspace monorepo. All commands should be executed from the repository root unless specifically noted. The workspace structure follows a packages/* pattern with shared dependencies hoisted to the root.
+
+### Critical Monorepo Rules
+1. **ALWAYS run commands from repository root** using workspace filters
+2. **NEVER install dependencies directly in packages** - use `pnpm add -w` or `--filter`
+3. **Use workspace protocol** for internal dependencies: `"@lrpdm/shared": "workspace:*"`
+4. **Check affected packages** before commits using `pnpm -r exec git status`
 
 ## Technical Stack
 
@@ -29,6 +40,10 @@ You are working on LRPDM (Live, Reliable, Project, Data & Mapping), a comprehens
 
 ```
 gis-platform/
+├── .claude/                 # Claude Code configuration
+│   ├── settings.json       # Security permissions
+│   ├── settings.local.json # Local overrides (gitignored)
+│   └── commands/           # Custom slash commands
 ├── packages/
 │   ├── api/         # Fastify API with PostGIS integration
 │   ├── web/         # React Native Web app
@@ -37,6 +52,45 @@ gis-platform/
 ├── docs/            # Documentation
 ├── migrations/      # Database migrations
 └── infrastructure/  # Docker, K8s configs
+```
+
+## Monorepo Commands
+
+### Package Management
+```bash
+# Add dependency to specific package
+pnpm add <package> --filter @lrpdm/api
+
+# Add dev dependency to root
+pnpm add -D -w <package>
+
+# Run command in all packages
+pnpm -r <command>
+
+# Run command in specific package
+pnpm --filter @lrpdm/web <command>
+```
+
+### Common Tasks
+```bash
+# Development
+pnpm dev              # Start all services
+pnpm dev:api          # Start API only
+pnpm dev:web          # Start web app only
+
+# Building
+pnpm build            # Build all packages
+pnpm build:changed    # Build only changed packages
+
+# Testing
+pnpm test             # Test all packages
+pnpm test:api         # Test API package
+pnpm test:coverage    # Coverage for all packages
+
+# Linting & Formatting
+pnpm lint             # Lint all packages
+pnpm lint:fix         # Fix linting issues
+pnpm format           # Format all code
 ```
 
 ## Coding Standards

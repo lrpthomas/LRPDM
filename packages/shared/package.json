@@ -1,5 +1,5 @@
 {
-  "name": "@gis-platform/shared",
+  "name": "@lrpdm/shared",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.16",
     "typescript": "^5.5.4",
     "vitest": "^2.1.8"
   }

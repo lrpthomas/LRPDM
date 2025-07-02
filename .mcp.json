@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "servers": {
+    "filesystem": {
+      "command": "mcp-server-filesystem",
+      "args": ["--root", "."],
+      "env": {
+        "FILESYSTEM_READ_ONLY": "false"
+      }
+    },
+    "git": {
+      "command": "mcp-server-git",
+      "args": ["--repo", "."],
+      "env": {
+        "GIT_SAFE_MODE": "true"
+      }
+    },
+    "postgres": {
+      "command": "mcp-server-postgres",
+      "args": ["--connection-string", "${DATABASE_URL}"],
+      "env": {
+        "POSTGRES_SCHEMA": "public",
+        "POSTGRES_EXTENSIONS": "postgis"
+      }
+    }
+  },
+  "globalShortcuts": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "dev": "pnpm dev"
+  }
+}
