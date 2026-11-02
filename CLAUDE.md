@@ -1,405 +1,127 @@
-# CLAUDE.md - LRPDM GIS Platform Development Guidelines
+# CLAUDE.md — LRP Development Guidelines
 
-## Project Overview
+## Project identity and scope
 
-You are working on LRPDM (Live, Reliable, Project, Data & Mapping), a comprehensive GIS web/mobile application that enables field data collection, mapping, and spatial analysis with offline-first capabilities.
+- **Official company name:** **LRP Data & Management, Inc.**
+- **Branding:** use **LRP** without expanding the initials; retain `LRPDM` where it is an existing repository or package identifier.
+- **GitHub repository:** `lrpthomas/LRPDM`.
+- **Root package name:** `gis-platform` (from `package.json`; this is not the repository name or an expansion of LRPDM).
 
-**Project Repository**: `gis-platform`
-**Primary Developer**: One-person team requiring maximum automation
-**Target Platforms**: Web (primary), iOS/Android (native apps via React Native)
-**Monorepo Structure**: PNPM workspaces with shared dependencies
+This repository contains an in-development GIS application with a web interface, spatial-data services, and a mobile scaffold. The backend is partway through a migration from Express to Fastify. Do not describe planned capabilities as completed features or assume this repository is another LRPDM product.
 
-## Monorepo Architecture
+## Read the implementation first
 
-This is a PNPM workspace monorepo. All commands should be executed from the repository root unless specifically noted. The workspace structure follows a packages/* pattern with shared dependencies hoisted to the root.
+Use package manifests, source code, migrations, and active configuration to verify commands and behavior. Read the relevant package's `CLAUDE.md` for additional guidance, but check its technical claims against the implementation: several documents still describe older layouts or planned features. Report conflicts rather than silently following obsolete paths or inventing missing scripts.
 
-### Critical Monorepo Rules
-1. **ALWAYS run commands from repository root** using workspace filters
-2. **NEVER install dependencies directly in packages** - use `pnpm add -w` or `--filter`
-3. **Use workspace protocol** for internal dependencies: `"@lrpdm/shared": "workspace:*"`
-4. **Check affected packages** before commits using `pnpm -r exec git status`
+## Repository structure
 
-## Technical Stack
-
-### Core Technologies
-- **Backend**: Node.js 22.11.0, Fastify, PostGIS 16-3.4
-- **Frontend**: React Native Web, MapLibre GL JS
-- **Database**: PostgreSQL 16 with PostGIS 3.4 extensions
-- **Package Manager**: PNPM workspaces
-- **State Management**: RxDB with CRDT for offline sync
-- **Infrastructure**: Docker, Kubernetes (future), Hostwinds VPS
-- **Monitoring**: Prometheus, Grafana, Loki
-
-### Development Tools
-- **IDE**: Cursor
-- **AI Assistants**: Claude Code, ChatGPT
-- **Version Control**: GitHub
-- **Testing**: Jest, React Testing Library, Playwright
-
-## Project Structure
-
-```
-gis-platform/
-├── .claude/                 # Claude Code configuration
-│   ├── settings.json       # Security permissions
-│   ├── settings.local.json # Local overrides (gitignored)
-│   └── commands/           # Custom slash commands
-├── packages/
-│   ├── api/         # Fastify API with PostGIS integration
-│   ├── web/         # React Native Web app
-│   ├── mobile/      # React Native mobile app
-│   └── shared/      # Shared utilities and types
-├── docs/            # Documentation
-├── migrations/      # Database migrations
-└── infrastructure/  # Docker, K8s configs
+```text
+packages/
+  api/          # New Fastify API; entry point: src/index.ts
+  api-legacy/   # Existing Express API; entry point: server.ts
+  web/          # React / React Native Web application, served by Vite
+  mobile/       # React Native scaffold
+  shared/       # Shared TypeScript types and utilities
+migrations/     # Knex migrations for spatial and application tables
+tests/          # Root-level unit and spatial tests; check runner discovery
+infrastructure/ # Dockerfile, PostgreSQL initialization, K8s/Terraform files
+orchestration/  # Agent/orchestration code and separate Compose configuration
+.orchestration/ # Additional orchestration code
+.claude/        # Assistant configuration, commands, hooks, and guidance
+.github/        # Workflows and repository configuration
+docs/           # Supporting documentation
 ```
 
-## Monorepo Commands
+The Fastify package currently registers authentication, health, and spatial-test endpoints. The legacy Express package contains the broader data-import, spatial, task, and notification routes. Check which API owns a route before changing it; the two APIs are not interchangeable.
 
-### Package Management
+## Declared toolchain and dependencies
+
+- **Runtime:** Node.js `>=22.11.0` according to the root manifest.
+- **Package manager:** pnpm workspaces (`packages/*`); root `packageManager` pins `pnpm@8.15.0`. Some workflows and Docker configuration specify pnpm 9.15.0, so verify compatibility before changing a lockfile or relying on CI parity.
+- **Language:** TypeScript; package configurations extend `tsconfig.base.json`, which enables strict mode.
+- **Web:** React 18, React Native Web, Vite 5, MapLibre GL JS 4, Mapbox GL Draw, and `react-window`. TanStack Query and Axios are also declared dependencies.
+- **New API:** Fastify 4, `pg`, JWT authentication, bcrypt, and TypeBox.
+- **Legacy API:** Express 5, Knex, `pg`, and file-import/parsing libraries.
+- **Database services:** root `docker-compose.yml` defines `postgis/postgis:16-3.4` and Redis 7. A defined Redis service does not establish that application caching is implemented.
+- **Mobile:** React Native 0.72.7 with React 18.2.0; RxDB is declared here, but the checked-in app is a placeholder. Native `ios/` and `android/` projects are not present.
+- **Tests:** Vitest scripts in `api` and `shared`; Jest scripts in `api-legacy` and `mobile`. The web package has no test script or declared React Testing Library/Playwright setup.
+
+Offline synchronization, CRDT conflict resolution, service-worker caching, and production-ready native apps are not established by the current scaffold. Infrastructure and monitoring configuration also must not be presented as proof of a running deployment. Verify any hosting claim separately.
+
+## Workspace commands
+
+Run these from the repository root. They are declared commands, not a guarantee that the current checkout builds or passes tests.
+
 ```bash
-# Add dependency to specific package
-pnpm add <package> --filter @lrpdm/api
+pnpm install
 
-# Add dev dependency to root
-pnpm add -D -w <package>
+# Start the component needed for the task
+pnpm dev:api              # New Fastify API
+pnpm dev:api-legacy       # Legacy Express API
+pnpm dev:web              # Vite web application
+pnpm dev                 # Runs workspace dev scripts in parallel; not Docker services
 
-# Run command in all packages
-pnpm -r <command>
+# Focused builds and tests
+pnpm --filter @lrpdm/shared build
+pnpm --filter @lrpdm/api build
+pnpm --filter @lrpdm/web build
+pnpm --filter @lrpdm/api test --run
+pnpm --filter @lrpdm/shared test --run
+pnpm --filter @lrpdm/api-legacy test
 
-# Run command in specific package
-pnpm --filter @lrpdm/web <command>
+# Root scripts
+pnpm build
+pnpm test
+pnpm type-check
+pnpm security:audit
+
+# Dependency changes
+pnpm --filter @lrpdm/api add <package>
+pnpm add -D -w <root-development-tool>
 ```
 
-### Common Tasks
-```bash
-# Development
-pnpm dev              # Start all services
-pnpm dev:api          # Start API only
-pnpm dev:web          # Start web app only
+Declare dependencies in the package that uses them; do not assume root dependencies or hoisting make undeclared imports valid. Use `workspace:*` for actual internal package dependencies. Keep pnpm as the intended package manager even though a `package-lock.json` also exists; avoid unrelated lockfile churn.
 
-# Building
-pnpm build            # Build all packages
-pnpm build:changed    # Build only changed packages
+Root `lint`, `lint:fix`, and `test:coverage` scripts delegate to packages, but those scripts are not implemented consistently across the workspace. Coverage is currently declared only in `api-legacy`; the web package declares only `dev`, `build`, and `preview`. Check each package before promising workspace-wide coverage. Root `type-check` is `tsc --noEmit`, not an aggregate project-reference build.
 
-# Testing
-pnpm test             # Test all packages
-pnpm test:api         # Test API package
-pnpm test:coverage    # Coverage for all packages
+Use `git status` and `git diff` at the root to inspect changes. Root `pnpm format` rewrites matching files throughout the repository; prefer formatting only files changed for the task.
 
-# Linting & Formatting
-pnpm lint             # Lint all packages
-pnpm lint:fix         # Fix linting issues
-pnpm format           # Format all code
-```
+## Configuration and known integration gaps
 
-## Coding Standards
+Verify these before writing setup instructions or diagnosing a failed start:
 
-### TypeScript Configuration
-- **Always use strict mode**
-- **Enable all strict flags** in tsconfig.json
-- **No implicit any** - all types must be explicit
-- **Use interfaces** for object shapes, types for unions/primitives
+- Fastify defaults to **port 3000** via `API_PORT`; legacy Express defaults to **8000** via `PORT`. Vite config uses **3001** and proxies relative `/api` requests to **3000**. The web API service instead hardcodes `http://localhost:8000/api`.
+- `.env.example` sets `API_PORT=3001` and a CORS origin of `http://localhost:3000`, which do not align with those defaults. Do not copy it and assume the services will connect correctly.
+- Fastify reads `DATABASE_URL`. The legacy database configuration reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`, not the example's `POSTGRES_*` variables. Ensure environment variables are available to the actual package process; do not assume a root `.env` is loaded by every workspace script.
+- Root Compose defines a database named `lrpdm_gis`. Match the application's database connection and credentials to the intended local service. Treat example credentials as local-development placeholders only.
+- Fastify's database plugin imports `getPool` from `@lrpdm/shared`, but the shared package does not currently export it, and the API manifest does not declare the shared dependency. Do not document this pool as an available shared API.
+- Migration scripts exist in `api-legacy`, not the root or new API package. Root `knexfile.ts` still imports the missing `src/config/database` path, and legacy migration paths need review after the package move. Confirm configuration and target database before running any migration.
+- Both `vite.config.ts` and generated `vite.config.js` are tracked; the JavaScript copy lacks the TypeScript file's React Native Web alias. Verify which config is loaded before assuming the alias takes effect.
 
-### Naming Conventions
-```typescript
-// Files: kebab-case
-feature-collection.ts
-spatial-utils.ts
+Resolve only the issues within the requested task. Do not silently migrate databases, change hosting, or broaden a documentation correction into application rewrites.
 
-// React Components: PascalCase
-DataTable.tsx
-MapContainer.tsx
+## Implementation guidance
 
-// Functions/Variables: camelCase
-const processFeatures = () => {}
-let featureCount = 0
+These are development expectations, not claims that all existing code already complies:
 
-// Constants: UPPER_SNAKE_CASE
-const MAX_FEATURES = 10000
-const DEFAULT_SRID = 4326
+- Preserve strict TypeScript checking. Prefer explicit boundary types and `unknown` plus validation over introducing more `any` types.
+- Follow nearby naming and component conventions. Use functional React components, accessible controls, responsive layouts, and appropriate loading/error states.
+- Reuse actual exported utilities and existing map components. Check placeholders before relying on them; for example, `bboxFromFeatures` currently has no bounding-box calculation.
+- Validate request bodies, authorization, uploads, and geometry before processing. Use parameterized SQL and avoid leaking secrets or sensitive data in logs.
+- Use environment-managed secrets; do not rely on development JWT fallbacks or example passwords in production.
+- Use GeoJSON at established spatial API boundaries and preserve longitude/latitude ordering. The spatial migration stores `features.geom` as `geometry(Geometry, 4326)` with a GiST index.
+- Keep SRIDs and units explicit. Use a suitable projected CRS or PostGIS geography for meter-based distance calculations; do not treat EPSG:4326 geometry distances as meters or merely relabel coordinates with `ST_SetSRID` when a transformation is needed.
+- Retain spatial indexes and validate geometry validity as appropriate. Measure expensive queries and large-data UI behavior rather than asserting performance from a target alone.
+- Do not add an offline queue or conflict policy by assumption. Establish persistence, retry, and reconciliation requirements before implementing offline behavior.
 
-// Database: snake_case
-CREATE TABLE feature_collections (
-  feature_id SERIAL PRIMARY KEY,
-  created_at TIMESTAMP
-)
-```
+## Verification and completion
 
-### Error Handling
-```typescript
-// Always use custom error classes
-class SpatialError extends Error {
-  constructor(message: string, public code: string, public details?: any) {
-    super(message);
-    this.name = 'SpatialError';
-  }
-}
+1. Review the affected package manifests and current tests; add focused regression coverage for behavior changes.
+2. Run the relevant builds, checks, and tests that are available. Distinguish passes, failures, missing tooling, and checks not run.
+3. Verify test discovery: root-level tests are not automatically covered by package-local runners. Vitest's default script can enter watch mode; use a one-shot run for non-interactive verification.
+4. The legacy Jest config specifies 85% thresholds. Do not report repository-wide coverage or enforced CI gates without measured evidence: the coverage workflow currently tolerates test failures and its quality gate is in setup mode.
+5. Treat documented latency, throughput, and coverage numbers as targets until verified. Test mobile and offline behavior only when implemented and relevant; do not claim compatibility from a scaffold.
+6. Review the final diff for unrelated changes, secrets, generated-file churn, and stale documentation. Use focused commits and explain limitations honestly.
+7. Commit, push, open pull requests, merge, or deploy only as authorized. Documentation work does not authorize production changes.
 
-// Always handle errors explicitly
-try {
-  const result = await performSpatialQuery();
-} catch (error) {
-  if (error instanceof SpatialError) {
-    logger.error('Spatial operation failed', { code: error.code, details: error.details });
-    throw new ApiError(400, 'Invalid spatial operation');
-  }
-  throw error;
-}
-```
-
-## Spatial Data Handling
-
-### Geometry Standards
-- **Always use GeoJSON format** for API communication
-- **Coordinate system**: EPSG:4326 (WGS84) for storage
-- **Transform to EPSG:3857** (Web Mercator) for display
-- **Validate geometries** before storage using PostGIS ST_IsValid()
-
-### PostGIS Patterns
-```sql
--- Always create spatial indexes
-CREATE INDEX idx_features_geom ON features USING GIST(geom);
-
--- Use ST_Transform for coordinate system changes
-SELECT ST_Transform(geom, 3857) as web_geom FROM features;
-
--- Optimize spatial queries with bbox pre-filtering
-SELECT * FROM features 
-WHERE geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
-AND ST_DWithin(geom, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7);
-```
-
-### Performance Requirements
-- Spatial queries: < 2 seconds for 100k features
-- Map tile generation: < 500ms per tile
-- File upload processing: < 30 seconds for 10MB CSV
-- Table virtualization: Handle 100k+ rows smoothly
-
-## React/React Native Guidelines
-
-### Component Structure
-```typescript
-// Always use functional components with TypeScript
-interface DataTableProps {
-  features: Feature[];
-  onFeatureSelect?: (feature: Feature) => void;
-  loading?: boolean;
-}
-
-export const DataTable: React.FC<DataTableProps> = ({ 
-  features, 
-  onFeatureSelect,
-  loading = false 
-}) => {
-  // Hooks at the top
-  const [sortColumn, setSortColumn] = useState<string>('');
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  
-  // Memoize expensive computations
-  const sortedFeatures = useMemo(() => 
-    sortFeatures(features, sortColumn), 
-    [features, sortColumn]
-  );
-  
-  // Early returns for edge cases
-  if (loading) return <LoadingSpinner />;
-  if (!features.length) return <EmptyState />;
-  
-  // Main render
-  return (
-    <View style={styles.container}>
-      {/* Component JSX */}
-    </View>
-  );
-};
-```
-
-### Mobile-First Design
-- **Touch targets**: Minimum 44pt (11mm)
-- **Use Pressable** instead of TouchableOpacity for better performance
-- **Implement pull-to-refresh** for data updates
-- **Handle offline state** with clear indicators
-
-## Testing Requirements
-
-### Test Coverage Targets
-- **Unit tests**: >85% coverage
-- **Integration tests**: All API endpoints
-- **E2E tests**: Critical user workflows
-- **Performance tests**: Load testing for spatial queries
-
-### Test Patterns
-```typescript
-// Test file naming: component.test.tsx or module.test.ts
-describe('FeatureCollection', () => {
-  // Group related tests
-  describe('when processing GeoJSON', () => {
-    it('should validate geometry types', async () => {
-      // Arrange
-      const invalidGeometry = { type: 'InvalidType', coordinates: [] };
-      
-      // Act & Assert
-      await expect(processGeometry(invalidGeometry))
-        .rejects
-        .toThrow(GeometryValidationError);
-    });
-  });
-});
-```
-
-## Git Workflow
-
-### Branch Naming
-```bash
-feature/week{n}-{component}-{description}
-bugfix/issue-{number}-{description}
-chore/update-{dependency}
-```
-
-### Commit Messages
-```bash
-# Format: type(scope): description [TASK-ID]
-
-feat(map): add cluster layer for point features [TASK-2-3]
-fix(offline): resolve sync conflict for overlapping edits [TASK-3-5]
-perf(query): optimize spatial index usage [TASK-4-1]
-docs(api): update shapefile upload endpoint docs [TASK-1-8]
-```
-
-### PR Guidelines
-- **One feature per PR**
-- **Include test coverage**
-- **Update documentation**
-- **Add performance impact notes**
-
-## Common Patterns
-
-### API Endpoint Structure
-```typescript
-// packages/api/src/routes/features.ts
-export default async function featureRoutes(fastify: FastifyInstance) {
-  // Input validation schema
-  const createFeatureSchema = {
-    body: {
-      type: 'object',
-      required: ['geometry', 'properties'],
-      properties: {
-        geometry: { $ref: 'geometry#' },
-        properties: { type: 'object' }
-      }
-    }
-  };
-  
-  // Route handler
-  fastify.post<{ Body: CreateFeatureDto }>('/', {
-    schema: createFeatureSchema,
-    preHandler: [authenticate, validateSpatialData]
-  }, async (request, reply) => {
-    const { geometry, properties } = request.body;
-    
-    try {
-      const feature = await createFeature(geometry, properties);
-      return reply.code(201).send({ data: feature });
-    } catch (error) {
-      request.log.error(error);
-      throw new ApiError(400, 'Failed to create feature');
-    }
-  });
-}
-```
-
-### Offline Sync Pattern
-```typescript
-// Always implement conflict resolution
-const syncManager = new SyncManager({
-  conflictResolution: 'client-wins', // or 'server-wins', 'custom'
-  retryAttempts: 3,
-  retryDelay: 1000,
-  batchSize: 100
-});
-
-// Queue operations when offline
-if (!navigator.onLine) {
-  await syncManager.queueOperation({
-    type: 'CREATE_FEATURE',
-    data: featureData,
-    timestamp: Date.now()
-  });
-}
-```
-
-## Performance Optimization
-
-### Database Queries
-- **Use connection pooling** (min: 10, max: 100)
-- **Implement query result caching** with Redis
-- **Paginate large result sets** (default: 50 items)
-- **Use database views** for complex repeated queries
-
-### Frontend Optimization
-- **Lazy load map layers** based on zoom level
-- **Implement virtual scrolling** for tables >1000 rows
-- **Use web workers** for geometry processing
-- **Cache map tiles** in IndexedDB
-
-## Security Guidelines
-
-- **Validate all spatial inputs** against injection attacks
-- **Implement rate limiting** (100 requests/minute default)
-- **Use parameterized queries** - never concatenate SQL
-- **Sanitize file uploads** - check file types and sizes
-- **Implement CORS properly** for API endpoints
-
-## AI Assistant Integration
-
-When integrating AI features:
-- **Cache AI responses** to minimize API costs
-- **Implement fallbacks** for when AI services are unavailable
-- **Log token usage** for cost tracking
-- **Use streaming responses** for better UX
-
-## Debugging Tips
-
-### Spatial Issues
-```bash
-# Check geometry validity
-SELECT id, ST_IsValid(geom), ST_IsValidReason(geom) 
-FROM features WHERE NOT ST_IsValid(geom);
-
-# Debug coordinate system issues
-SELECT ST_SRID(geom), ST_AsText(geom) FROM features LIMIT 10;
-```
-
-### Performance Profiling
-```typescript
-// Use performance marks
-performance.mark('spatial-query-start');
-const results = await querySpatialData();
-performance.mark('spatial-query-end');
-performance.measure('spatial-query', 'spatial-query-start', 'spatial-query-end');
-```
-
-## Task Completion Checklist
-
-Before marking any task complete:
-- [ ] Code follows all style guidelines above
-- [ ] TypeScript strict mode passes
-- [ ] Tests written and passing (>85% coverage)
-- [ ] Documentation updated
-- [ ] Performance benchmarks met
-- [ ] Mobile compatibility verified
-- [ ] Offline functionality tested
-- [ ] Error handling comprehensive
-- [ ] Logs and monitoring in place
-- [ ] Security considerations addressed
-
-## Questions or Clarifications
-
-If you encounter ambiguity or need clarification:
-1. Check existing code patterns first
-2. Refer to PostGIS documentation for spatial operations
-3. Follow React Native Web compatibility guidelines
-4. When in doubt, optimize for mobile performance
-
-Remember: This is a one-person project, so prioritize automation, maintainability, and clear documentation in every implementation decision.
+Keep changes maintainable, narrowly scoped, and grounded in the code that exists.
